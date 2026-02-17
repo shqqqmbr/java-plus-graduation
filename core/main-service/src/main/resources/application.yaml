@@ -1,8 +1,10 @@
+explore-with-me-server:
+  url: http://stats-server:9090
 spring:
   application:
     name: main-service
   config:
-    import: 'configserver:'
+    import: "configserver:"
   cloud:
     config:
       discovery:

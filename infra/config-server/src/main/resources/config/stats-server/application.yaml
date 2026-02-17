@@ -1,23 +1,36 @@
 spring:
   application:
     name: stats-server
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: none
-
-    properties:
-      hibernate.hibernate.format_sql: true
 
   datasource:
-    username: "dbuser"
-    password: "12345"
     url: jdbc:postgresql://localhost:6432/stats
-    driver-class-name: "org.postgresql.Driver"
+    username: stats
+    password: stats
 
-  sql:
-    init:
-      mode: always
+  jpa:
+    properties:
+      hibernate:
+        default_schema: public
+        format_sql: true
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+
+logging:
+  level:
+    ru.practicum.ewm: DEBUG
+
+eureka:
+  instance:
+    preferIpAddress: true
+    hostname: localhost
+    instance-id: "${spring.application.name}:${random.value}"
+  client:
+    healthcheck:
+      enabled: true
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
 
 server:
   port: 9090

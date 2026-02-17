@@ -1,23 +1,43 @@
 spring:
   application:
     name: main-service
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: none
-
-    properties:
-      hibernate.hibernate.format_sql: true
 
   datasource:
-    username: "dbuser"
-    password: "12345"
     url: jdbc:postgresql://localhost:4432/main
-    driver-class-name: "org.postgresql.Driver"
+    username: main
+    password: main
+
+  jpa:
+    properties:
+      hibernate:
+        default_schema: public
+        format_sql: false
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
 
   sql:
     init:
       mode: always
+
+logging:
+  level:
+    ru.practicum.ewm: DEBUG
+
+explore-with-me-server:
+  url: http://localhost:9090
+
+eureka:
+  instance:
+    preferIpAddress: true
+    hostname: localhost
+    instance-id: "${spring.application.name}:${random.value}"
+  client:
+    healthcheck:
+      enabled: true
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
 
 server:
   port: 0
