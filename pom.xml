@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.0</version>
+        <version>3.2.10</version>
         <relativePath/>
     </parent>
 
@@ -14,9 +14,6 @@
     <modules>
         <module>stats</module>
         <module>infra</module>
-        <module>infra/config-server</module>
-        <module>infra/discovery-server</module>
-        <module>infra/gateway-server</module>
         <module>core</module>
     </modules>
 

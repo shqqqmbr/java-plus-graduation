@@ -274,11 +274,11 @@ public class EventServiceImpl implements EventService {
         List<BooleanExpression> conditions = new ArrayList<>();
 
         if (params.getUsers() != null && !params.getUsers().isEmpty()) {
-            conditions.add(event.initiator.id.in(params.getUsers()));
+            conditions.add(event.initiator().id.in(params.getUsers()));
         }
 
         if (params.getCategories() != null && !params.getCategories().isEmpty()) {
-            conditions.add(event.category.id.in(params.getCategories()));
+            conditions.add(event.category().id.in(params.getCategories()));
         }
 
         if (params.getStates() != null && !params.getStates().isEmpty()) {
@@ -309,8 +309,6 @@ public class EventServiceImpl implements EventService {
         return events.map(eventMapper::toFullDto).getContent();
     }
 
-
-    // Public API:
     @Override
     public EventFullDto getPublicBy(Long eventId, HttpServletRequest request) {
         log.debug("Метод getPublicById(); eventId={}", eventId);
@@ -340,7 +338,7 @@ public class EventServiceImpl implements EventService {
         }
 
         if (params.getCategories() != null && !params.getCategories().isEmpty()) {
-            conditions.add(event.category.id.in(params.getCategories()));
+            conditions.add(event.category().id.in(params.getCategories()));
         }
 
         if (params.getPaid() != null) {
@@ -361,8 +359,8 @@ public class EventServiceImpl implements EventService {
             conditions.add(event.eventDate.after(Instant.now()));
         }
 
-        if (params.getOnlyAvailable() != null) {
-            conditions.add(event.confirmedRequests.lt(event.participantLimit.longValue()));
+        if (params.getOnlyAvailable() != null && params.getOnlyAvailable()) {
+            conditions.add(event.confirmedRequests.lt(event.participantLimit));
         }
 
         BooleanExpression finalCondition = conditions.stream()
@@ -375,11 +373,15 @@ public class EventServiceImpl implements EventService {
 
         Pageable pageable = null;
 
-        switch (params.getSort()) {
-            case EVENT_DATE -> pageable =
-                    PageRequest.of(page, params.getSize(), Sort.by(Sort.Direction.ASC, "eventDate"));
-            case VIEWS -> pageable =
-                    PageRequest.of(page, params.getSize(), Sort.by(Sort.Direction.DESC, "views"));
+        if (params.getSort() != null) {
+            switch (params.getSort()) {
+                case EVENT_DATE -> pageable =
+                        PageRequest.of(page, params.getSize(), Sort.by(Sort.Direction.ASC, "eventDate"));
+                case VIEWS -> pageable =
+                        PageRequest.of(page, params.getSize(), Sort.by(Sort.Direction.DESC, "views"));
+            }
+        } else {
+            pageable = PageRequest.of(page, params.getSize());
         }
 
         Page<Event> events = eventRepository.findAll(finalCondition, pageable);

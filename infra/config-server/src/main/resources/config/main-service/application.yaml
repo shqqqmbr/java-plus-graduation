@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: main-service
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+
+    properties:
+      hibernate.hibernate.format_sql: true
+
+  datasource:
+    username: "dbuser"
+    password: "12345"
+    url: jdbc:postgresql://localhost:4432/main
+    driver-class-name: "org.postgresql.Driver"
+
+  sql:
+    init:
+      mode: always
+
+server:
+  port: 0
