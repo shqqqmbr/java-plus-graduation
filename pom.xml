@@ -10,7 +10,7 @@
         <relativePath/>
     </parent>
 
-    <name>Java Graduation</name>
+    <name>Explore With Me</name>
     <modules>
         <module>infra</module>
         <module>stats</module>
@@ -18,7 +18,7 @@
     </modules>
 
     <groupId>ru.practicum</groupId>
-    <artifactId>java-plus-graduation</artifactId>
+    <artifactId>explore-with-me</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
