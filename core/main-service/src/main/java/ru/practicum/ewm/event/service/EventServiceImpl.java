@@ -274,11 +274,11 @@ public class EventServiceImpl implements EventService {
         List<BooleanExpression> conditions = new ArrayList<>();
 
         if (params.getUsers() != null && !params.getUsers().isEmpty()) {
-            conditions.add(event.initiator().id.in(params.getUsers()));
+            conditions.add(event.initiator.id.in(params.getUsers()));
         }
 
         if (params.getCategories() != null && !params.getCategories().isEmpty()) {
-            conditions.add(event.category().id.in(params.getCategories()));
+            conditions.add(event.category.id.in(params.getCategories()));
         }
 
         if (params.getStates() != null && !params.getStates().isEmpty()) {
@@ -338,7 +338,7 @@ public class EventServiceImpl implements EventService {
         }
 
         if (params.getCategories() != null && !params.getCategories().isEmpty()) {
-            conditions.add(event.category().id.in(params.getCategories()));
+            conditions.add(event.id.in(params.getCategories()));
         }
 
         if (params.getPaid() != null) {

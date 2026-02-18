@@ -1,6 +1,4 @@
 spring:
-  application:
-    name: stats-server
   datasource:
     url: jdbc:postgresql://localhost:6432/stats
     username: stats
@@ -19,5 +17,3 @@ spring:
   logging:
     level:
       ru.practicum.ewm: DEBUG
-server:
-  port: 9090

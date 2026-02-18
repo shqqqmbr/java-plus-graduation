@@ -6,7 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.practicum.ewm.exception.*;
+import ru.practicum.ewm.exception.ApiError;
+import ru.practicum.ewm.exception.BadRequestException;
+import ru.practicum.ewm.exception.ConflictException;
+import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.dto.ErrorResponse;
 
 import java.time.LocalDateTime;

@@ -1,6 +1,4 @@
 spring:
-  application:
-    name: main-service
   datasource:
     url: jdbc:postgresql://localhost:4432/main
     username: main
@@ -19,5 +17,3 @@ spring:
   logging:
     level:
       ru.practicum.ewm: DEBUG
-server:
-  port: 0
