@@ -338,7 +338,7 @@ public class EventServiceImpl implements EventService {
         }
 
         if (params.getCategories() != null && !params.getCategories().isEmpty()) {
-            conditions.add(event.id.in(params.getCategories()));
+            conditions.add(event.category.id.in(params.getCategories()));
         }
 
         if (params.getPaid() != null) {
