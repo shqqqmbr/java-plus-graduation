@@ -18,7 +18,9 @@ import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.exception.NotFoundException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -77,20 +79,19 @@ public class CompilationServiceImpl implements CompilationService {
         compilationRepository.deleteById(compId);
     }
 
-    // Public API:
     @Override
     public List<CompilationDto> getAllBy(Boolean pinned, Integer from, Integer size) {
         log.debug("Метод getAllBy(); pinned={}, from={}, size={}", pinned, from, size);
 
         int page = from / size;
         Pageable pageable = PageRequest.of(page, size);
-        Page<Compilation> compilations = pinned != null
-                ? compilationRepository.findByPinned(pinned, pageable) : compilationRepository.findAll(pageable);
+        List<Compilation> compilations = Optional.ofNullable(pinned)
+                .map(p -> compilationRepository.findByPinned(p, pageable))
+                .orElseGet(() -> compilationRepository.findAll(pageable).getContent());
 
-        return compilations.getContent()
-                .stream()
+        return compilations.stream()
                 .map(compilationMapper::toDto)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override

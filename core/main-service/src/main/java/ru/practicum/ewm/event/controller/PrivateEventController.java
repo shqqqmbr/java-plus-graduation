@@ -16,6 +16,8 @@ import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 import java.net.URI;
 import java.util.List;
 
+import static org.springframework.http.HttpStatus.CREATED;
+
 @Slf4j
 @Validated
 @RestController
@@ -26,14 +28,13 @@ public class PrivateEventController {
     private final EventService eventService;
 
     @PostMapping
-    public ResponseEntity<EventFullDto> create(@PathVariable("userId") @NotNull @Positive Long userId,
+    @ResponseStatus(CREATED)
+    public EventFullDto create(@PathVariable("userId") @NotNull @Positive Long userId,
                                                @RequestBody @Valid final NewEventDto newDto) {
         log.debug("Метод create(); userId = {}; newDto = {}", userId, newDto);
 
         EventFullDto result = eventService.create(userId, newDto);
-        return ResponseEntity
-                .created(URI.create("/events/" + result.getId()))
-                .body(result);
+        return result;
     }
 
     @GetMapping
