@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +16,6 @@ import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 
 import java.net.URI;
 import java.util.List;
-
-import static org.springframework.http.HttpStatus.CREATED;
 
 @Slf4j
 @Validated
@@ -28,7 +27,7 @@ public class PrivateEventController {
     private final EventService eventService;
 
     @PostMapping
-    @ResponseStatus(CREATED)
+    @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto create(@PathVariable("userId") @NotNull @Positive Long userId,
                                                @RequestBody @Valid final NewEventDto newDto) {
         log.debug("Метод create(); userId = {}; newDto = {}", userId, newDto);
@@ -38,45 +37,50 @@ public class PrivateEventController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EventShortDto>> findAll(@PathVariable("userId") @Positive Long userId,
+    @ResponseStatus(HttpStatus.OK)
+    public List<EventShortDto> findAll(@PathVariable("userId") @Positive Long userId,
                                                        @RequestParam(defaultValue = "0") @PositiveOrZero int from,
                                                        @RequestParam(defaultValue = "10") @Positive int size) {
         log.debug("Метод findAll(); userId={}, from={}, size={}", userId, from, size);
 
         List<EventShortDto> result = eventService.getAllByUser(userId, from, size);
-        return ResponseEntity.ok(result);
+        return result;
     }
 
     @GetMapping("/{eventId}")
-    public ResponseEntity<EventFullDto> find(@PathVariable("userId") @Positive Long userId,
+    @ResponseStatus(HttpStatus.OK)
+    public EventFullDto find(@PathVariable("userId") @Positive Long userId,
                                              @PathVariable("eventId") @Positive Long eventId) {
         log.debug("Метод find(); userId={}, eventId={}", userId, eventId);
 
         EventFullDto result = eventService.getByUser(userId, eventId);
-        return ResponseEntity.ok(result);
+        return result;
     }
 
     @PatchMapping("/{eventId}")
-    public ResponseEntity<EventFullDto> update(@PathVariable("userId") @Positive Long userId,
+    @ResponseStatus(HttpStatus.OK)
+    public EventFullDto update(@PathVariable("userId") @Positive Long userId,
                                                @PathVariable("eventId") @Positive Long eventId,
                                                @RequestBody @Valid final UpdEventUserRequest updDto) {
         log.debug("Метод update(); userId={}, eventId={}, updDto={}", userId, eventId, updDto);
 
         EventFullDto result = eventService.updateByUser(userId, eventId, updDto);
-        return ResponseEntity.ok(result);
+        return result;
     }
 
     @GetMapping("/{eventId}/requests")
-    public ResponseEntity<List<ParticipationRequestDto>> getUserRequests(@PathVariable @Positive Long userId,
+    @ResponseStatus(HttpStatus.OK)
+    public List<ParticipationRequestDto> getUserRequests(@PathVariable @Positive Long userId,
                                                                          @PathVariable @Positive Long eventId) {
         log.debug("Метод getUserRequests(); userId={}, eventId={}", userId, eventId);
 
         List<ParticipationRequestDto> result = eventService.getEventRequests(userId, eventId);
-        return ResponseEntity.ok(result);
+        return result;
     }
 
     @PatchMapping("/{eventId}/requests")
-    public ResponseEntity<UpdRequestsStatusResult> updateRequests(
+    @ResponseStatus(HttpStatus.OK)
+    public UpdRequestsStatusResult updateRequests(
             @PathVariable @Positive Long userId,
             @PathVariable @Positive Long eventId,
             @RequestBody @Valid EventRequestStatusUpdateRequest updDto
@@ -84,6 +88,6 @@ public class PrivateEventController {
         log.debug("Метод updateRequest(); userId={}, eventId={}", userId, eventId);
 
         UpdRequestsStatusResult result = eventService.updateRequests(userId, eventId, updDto);
-        return ResponseEntity.ok(result);
+        return result;
     }
 }
