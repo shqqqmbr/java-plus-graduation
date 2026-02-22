@@ -1,0 +1,12 @@
+package ru.practicum.user.exception;
+
+public class BadRequestException extends ApiError {
+
+    public BadRequestException(String message) {
+        super(message);
+    }
+
+    public BadRequestException(String message, Object... args) {
+        super(message, args);
+    }
+}

@@ -1,8 +1,8 @@
-package ru.practicum.ewm.request.model;
+package ru.practicum.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.practicum.ewm.user.model.User;
+import ru.practicum.request.dto.RequestStatus;
 
 import java.time.Instant;
 
@@ -20,15 +20,13 @@ public class Request {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "event_id", foreignKey = @ForeignKey(name = "fk_requests_events"))
     @ToString.Exclude
-    private Event event;
+    private Long eventId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", foreignKey = @ForeignKey(name = "fk_requests_users"))
     @ToString.Exclude
-    private User requester;
+    private Long requesterId;
 
     @Column
     @Builder.Default
