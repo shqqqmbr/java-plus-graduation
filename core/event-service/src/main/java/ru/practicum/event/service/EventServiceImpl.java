@@ -417,20 +417,20 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public EventShortDto incrementConfirmedRequests(Long eventId) {
+    public EventDtoForRequestService incrementConfirmedRequests(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found"));
         event.setConfirmedRequests(event.getConfirmedRequests() + 1);
         eventRepository.save(event);
-        return eventMapper.toShortDto(event);
+        return eventMapper.toEventDtoForRequestService(event);
     }
 
     @Override
-    public EventShortDto getEventDtoForRequest(Long eventId) {
+    public EventDtoForRequestService getEventDtoForRequestService(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found"));
 
-        return eventMapper.toShortDto(event);
+        return eventMapper.toEventDtoForRequestService(event);
     }
 
     private Category findCategoryBy(Long categoryId) {

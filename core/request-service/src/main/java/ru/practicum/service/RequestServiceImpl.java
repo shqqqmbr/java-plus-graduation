@@ -150,6 +150,11 @@ public class RequestServiceImpl implements RequestService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public boolean isParticipant(Long userId, Long eventId) {
+        return requestRepository.existsByEventIdAndRequesterId(userId, eventId);
+    }
+
     private RequestStatus toRequestStatus(UpdRequestStatus updStatus) {
         return switch (updStatus) {
             case CONFIRMED -> RequestStatus.CONFIRMED;
@@ -157,6 +162,10 @@ public class RequestServiceImpl implements RequestService {
         };
     }
 
+    private Request findRequestBy(Long requestId) {
+        return requestRepository.findById(requestId)
+                .orElseThrow(() -> new NotFoundException("Request id={} не найден", requestId));
+    }
 
     private UserDto findUserBy(Long userId) {
         UserDto userDto = userClient.getUserById(userId);
@@ -164,18 +173,5 @@ public class RequestServiceImpl implements RequestService {
             throw new NotFoundException("User id={}, не существует", userId);
         }
         return userDto;
-    }
-
-    private Request findRequestBy(Long requestId) {
-        return requestRepository.findById(requestId)
-                .orElseThrow(() -> new NotFoundException("Request id={} не найден", requestId));
-    }
-
-    private EventFullDto findEventBy(Long eventId) {
-        EventFullDto eventDto = eventClient.getEventByIdFull(eventId);
-        if (eventDto == null) {
-            throw new NotFoundException("Event id={} не найден", eventId);
-        }
-        return eventDto;
     }
 }

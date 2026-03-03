@@ -22,3 +22,5 @@ eureka:
       defaultZone: http://${eureka.instance.hostname:localhost}:${eureka.instance.port:8761}/eureka/
     initial-instance-info-replication-interval-seconds: 30
     registry-fetch-interval-seconds: 30
+  instance:
+    prefer-ip-address: true

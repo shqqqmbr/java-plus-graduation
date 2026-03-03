@@ -19,4 +19,6 @@ public interface RequestService {
     List<ParticipationRequestDto> getRequestsByIds(List<Long> requestIds);
 
     List<ParticipationRequestDto> updateRequestStatuses(Set<Long> requestIds, UpdRequestStatus status);
+
+    boolean isParticipant(Long userId, Long eventId);
 }

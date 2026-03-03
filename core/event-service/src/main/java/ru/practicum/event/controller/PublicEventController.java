@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.event.dto.EventDtoForRequestService;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.UserEventSearchParams;
 import ru.practicum.event.service.EventService;
@@ -24,7 +25,6 @@ public class PublicEventController {
     @GetMapping("/{eventId}")
     public ResponseEntity<EventFullDto> publicSearchOne(@PathVariable @Positive Long eventId,
                                                         HttpServletRequest request) {
-        log.debug("Метод publicSearchOne(); eventId={}", eventId);
 
         EventFullDto event = eventService.getPublicBy(eventId, request);
         return ResponseEntity.ok(event);
@@ -33,9 +33,29 @@ public class PublicEventController {
     @GetMapping
     public ResponseEntity<List<EventFullDto>> publicSearchMany(@Valid @ModelAttribute UserEventSearchParams params,
                                                                HttpServletRequest request) {
-        log.debug("Метод publicSearchMany(); {}", params);
 
         List<EventFullDto> events = eventService.getPublicBy(params, request);
         return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/internal/{eventId}")
+    public ResponseEntity<EventDtoForRequestService> getEventById(
+            @PathVariable Long eventId) {
+        EventDtoForRequestService dto = eventService.getEventDtoForRequestService(eventId);
+
+        return ResponseEntity.ok(dto);
+    }
+
+    @PutMapping("internal/{eventId}/increment-confirmed")
+    public ResponseEntity<EventDtoForRequestService> incrementConfirmedRequests(
+            @PathVariable Long eventId) {
+
+
+        try {
+            EventDtoForRequestService updatedDto = eventService.incrementConfirmedRequests(eventId);
+            return ResponseEntity.ok(updatedDto);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
     }
 }

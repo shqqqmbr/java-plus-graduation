@@ -31,7 +31,7 @@ public interface EventService {
 
     UpdRequestsStatusResult updateRequests(Long userId, Long eventId, EventRequestStatusUpdateRequest updDto);
 
-    EventShortDto incrementConfirmedRequests(Long eventId);
+    EventDtoForRequestService incrementConfirmedRequests(Long eventId);
 
-    EventShortDto getEventDtoForRequest(Long eventId);
+    EventDtoForRequestService getEventDtoForRequestService(Long eventId);
 }
