@@ -7,9 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.event.dto.EventFullDto;
-import ru.practicum.ewm.event.dto.UserEventSearchParams;
-import ru.practicum.ewm.event.service.EventService;
+import ru.practicum.event.dto.EventFullDto;
+import ru.practicum.event.dto.UserEventSearchParams;
+import ru.practicum.event.service.EventService;
 
 import java.util.List;
 

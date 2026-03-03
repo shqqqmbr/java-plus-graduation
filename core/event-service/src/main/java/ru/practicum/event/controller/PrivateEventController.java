@@ -9,8 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.event.service.EventService;
-import ru.practicum.ewm.request.dto.ParticipationRequestDto;
+import ru.practicum.event.dto.*;
+import ru.practicum.event.service.EventService;
+import ru.practicum.request.dto.ParticipationRequestDto;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class PrivateEventController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto create(@PathVariable("userId") @NotNull @Positive Long userId,
-                                               @RequestBody @Valid final NewEventDto newDto) {
+                               @RequestBody @Valid final NewEventDto newDto) {
         log.debug("Метод create(); userId = {}; newDto = {}", userId, newDto);
 
         EventFullDto result = eventService.create(userId, newDto);
@@ -36,8 +37,8 @@ public class PrivateEventController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<EventShortDto> findAll(@PathVariable("userId") @Positive Long userId,
-                                                       @RequestParam(defaultValue = "0") @PositiveOrZero int from,
-                                                       @RequestParam(defaultValue = "10") @Positive int size) {
+                                       @RequestParam(defaultValue = "0") @PositiveOrZero int from,
+                                       @RequestParam(defaultValue = "10") @Positive int size) {
         log.debug("Метод findAll(); userId={}, from={}, size={}", userId, from, size);
 
         List<EventShortDto> result = eventService.getAllByUser(userId, from, size);
@@ -47,7 +48,7 @@ public class PrivateEventController {
     @GetMapping("/{eventId}")
     @ResponseStatus(HttpStatus.OK)
     public EventFullDto find(@PathVariable("userId") @Positive Long userId,
-                                             @PathVariable("eventId") @Positive Long eventId) {
+                             @PathVariable("eventId") @Positive Long eventId) {
         log.debug("Метод find(); userId={}, eventId={}", userId, eventId);
 
         EventFullDto result = eventService.getByUser(userId, eventId);
@@ -57,8 +58,8 @@ public class PrivateEventController {
     @PatchMapping("/{eventId}")
     @ResponseStatus(HttpStatus.OK)
     public EventFullDto update(@PathVariable("userId") @Positive Long userId,
-                                               @PathVariable("eventId") @Positive Long eventId,
-                                               @RequestBody @Valid final UpdEventUserRequest updDto) {
+                               @PathVariable("eventId") @Positive Long eventId,
+                               @RequestBody @Valid final UpdEventUserRequest updDto) {
         log.debug("Метод update(); userId={}, eventId={}, updDto={}", userId, eventId, updDto);
 
         EventFullDto result = eventService.updateByUser(userId, eventId, updDto);
@@ -68,7 +69,7 @@ public class PrivateEventController {
     @GetMapping("/{eventId}/requests")
     @ResponseStatus(HttpStatus.OK)
     public List<ParticipationRequestDto> getUserRequests(@PathVariable @Positive Long userId,
-                                                                         @PathVariable @Positive Long eventId) {
+                                                         @PathVariable @Positive Long eventId) {
         log.debug("Метод getUserRequests(); userId={}, eventId={}", userId, eventId);
 
         List<ParticipationRequestDto> result = eventService.getEventRequests(userId, eventId);

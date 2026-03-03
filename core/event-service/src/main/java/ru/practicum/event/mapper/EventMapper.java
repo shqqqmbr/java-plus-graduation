@@ -4,13 +4,13 @@ import org.mapstruct.*;
 import ru.practicum.category.mapper.CategoryMapper;
 import ru.practicum.event.dto.*;
 import ru.practicum.event.model.Event;
-import ru.practicum.ewm.user.mapper.UserMapper;
+import ru.practicum.user.dto.UserShortDto;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-@Mapper(componentModel = "spring", uses = {CategoryMapper.class, UserMapper.class})
+@Mapper(componentModel = "spring", uses = {CategoryMapper.class})
 public interface EventMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -33,11 +33,13 @@ public interface EventMapper {
     Event toEntity(NewEventDto newEventDto);
 
     @Mapping(target = "eventDate", expression = "java(toLocalDateTimeForMap(event.getEventDate()))")
+    @Mapping(target = "initiator", source = "initiator")
     EventShortDto toShortDto(Event event);
 
     @Mapping(target = "createdOn", expression = "java(toLocalDateTimeForMap(event.getCreatedOn()))")
     @Mapping(target = "eventDate", expression = "java(toLocalDateTimeForMap(event.getEventDate()))")
     @Mapping(target = "publishedOn", expression = "java(toLocalDateTimeForMap(event.getPublishedOn()))")
+    @Mapping(target = "initiator", source = "initiator")
     EventFullDto toFullDto(Event event);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -78,5 +80,14 @@ public interface EventMapper {
 
     default Instant toInstantForUpdate(LocalDateTime newDateTime, Instant currentValue) {
         return newDateTime != null ? newDateTime.toInstant(ZoneOffset.UTC) : currentValue;
+    }
+
+    default UserShortDto map(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        UserShortDto dto = new UserShortDto();
+        dto.setId(userId);
+        return dto;
     }
 }

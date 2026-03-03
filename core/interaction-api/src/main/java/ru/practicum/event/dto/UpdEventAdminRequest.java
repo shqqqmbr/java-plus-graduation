@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.ewm.event.dto.Location;
 
 import java.time.LocalDateTime;
 
@@ -44,5 +43,5 @@ public class UpdEventAdminRequest {
     @Size(min = 3, max = 120)
     private String title;
 
-    public enum StateAction { PUBLISH_EVENT, REJECT_EVENT }
+    public enum StateAction {PUBLISH_EVENT, REJECT_EVENT}
 }

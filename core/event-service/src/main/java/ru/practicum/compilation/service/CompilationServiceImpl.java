@@ -6,20 +6,18 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ewm.compilation.dto.CompilationDto;
-import ru.practicum.ewm.compilation.dto.NewCompilationDto;
-import ru.practicum.ewm.compilation.dto.UpdateCompilationDto;
-import ru.practicum.ewm.compilation.mapper.CompilationMapper;
-import ru.practicum.ewm.compilation.model.Compilation;
-import ru.practicum.ewm.compilation.repository.CompilationRepository;
-import ru.practicum.ewm.event.model.Event;
-import ru.practicum.ewm.event.repository.EventRepository;
-import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.compilation.dto.CompilationDto;
+import ru.practicum.compilation.dto.NewCompilationDto;
+import ru.practicum.compilation.dto.UpdateCompilationDto;
+import ru.practicum.compilation.mapper.CompilationMapper;
+import ru.practicum.compilation.model.Compilation;
+import ru.practicum.compilation.repository.CompilationRepository;
+import ru.practicum.event.model.Event;
+import ru.practicum.event.repository.EventRepository;
+import ru.practicum.exception.NotFoundException;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -78,19 +76,18 @@ public class CompilationServiceImpl implements CompilationService {
         compilationRepository.deleteById(compId);
     }
 
+    // Public API:
     @Override
     public List<CompilationDto> getAllBy(Boolean pinned, Integer from, Integer size) {
         log.debug("Метод getAllBy(); pinned={}, from={}, size={}", pinned, from, size);
 
         int page = from / size;
         Pageable pageable = PageRequest.of(page, size);
-        List<Compilation> compilations = Optional.ofNullable(pinned)
-                .map(p -> compilationRepository.findByPinned(p, pageable))
-                .orElseGet(() -> compilationRepository.findAll(pageable).getContent());
+        List<Compilation> compilations = compilationRepository.findByPinned(pinned, pageable);
 
         return compilations.stream()
                 .map(compilationMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

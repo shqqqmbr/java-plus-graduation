@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.comment.model.CommentState;
+import ru.practicum.comment.enums.CommentState;
 
 import java.time.LocalDateTime;
 

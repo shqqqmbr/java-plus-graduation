@@ -7,15 +7,15 @@ import ru.practicum.comment.dto.CommentFullDto;
 import ru.practicum.comment.dto.CommentPublicDto;
 import ru.practicum.comment.dto.NewCommentDto;
 import ru.practicum.comment.dto.UpdCommentDto;
-import ru.practicum.mapper.CommentMapper;
-import ru.practicum.model.Comment;
-import ru.practicum.model.CommentState;
-import ru.practicum.repository.CommentRepository;
+import ru.practicum.comment.enums.CommentState;
 import ru.practicum.event.client.EventServiceClient;
 import ru.practicum.event.dto.EventShortDto;
+import ru.practicum.exception.ConflictException;
+import ru.practicum.exception.NotFoundException;
+import ru.practicum.mapper.CommentMapper;
+import ru.practicum.model.Comment;
+import ru.practicum.repository.CommentRepository;
 import ru.practicum.user.client.UserServiceClient;
-import ru.practicum.user.exception.ConflictException;
-import ru.practicum.user.exception.NotFoundException;
 
 import java.util.List;
 

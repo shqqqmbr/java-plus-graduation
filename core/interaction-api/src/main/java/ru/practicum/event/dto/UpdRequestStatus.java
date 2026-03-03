@@ -1,3 +1,3 @@
 package ru.practicum.event.dto;
 
-public enum UpdRequestStatus { CONFIRMED, REJECTED }
+public enum UpdRequestStatus {CONFIRMED, REJECTED}

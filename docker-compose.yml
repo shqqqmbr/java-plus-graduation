@@ -8,12 +8,73 @@ services:
       - POSTGRES_DB=stats
       - POSTGRES_USER=stats
       - POSTGRES_PASSWORD=stats
-  main-db:
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  event-db:
     image: postgres:16.1
-    container_name: main-db
+    container_name: event-db
     ports:
       - "4432:5432"
     environment:
-      - POSTGRES_DB=main
-      - POSTGRES_USER=main
-      - POSTGRES_PASSWORD=main
+      - POSTGRES_DB=event
+      - POSTGRES_USER=event
+      - POSTGRES_PASSWORD=event
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  user-db:
+    image: postgres:16.1
+    container_name: user-db
+    ports:
+      - "4433:5432"
+    environment:
+      - POSTGRES_DB=user
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=user
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  request-db:
+    image: postgres:16.1
+    container_name: request-db
+    ports:
+      - "4434:5432"
+    environment:
+      - POSTGRES_DB=request
+      - POSTGRES_USER=request
+      - POSTGRES_PASSWORD=request
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  comment-db:
+    image: postgres:16.1
+    container_name: comment-db
+    ports:
+      - "4435:5432"
+    environment:
+      - POSTGRES_DB=comment
+      - POSTGRES_USER=comment
+      - POSTGRES_PASSWORD=comment
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

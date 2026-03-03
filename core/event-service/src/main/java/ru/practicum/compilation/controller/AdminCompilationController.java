@@ -7,10 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.compilation.dto.CompilationDto;
-import ru.practicum.ewm.compilation.dto.NewCompilationDto;
-import ru.practicum.ewm.compilation.dto.UpdateCompilationDto;
-import ru.practicum.ewm.compilation.service.CompilationService;
+import ru.practicum.compilation.dto.CompilationDto;
+import ru.practicum.compilation.dto.NewCompilationDto;
+import ru.practicum.compilation.dto.UpdateCompilationDto;
+import ru.practicum.compilation.service.CompilationService;
 
 @Slf4j
 @Validated

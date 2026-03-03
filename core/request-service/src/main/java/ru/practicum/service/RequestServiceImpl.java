@@ -4,20 +4,25 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ewm.event.model.Event;
-import ru.practicum.ewm.event.model.EventState;
-import ru.practicum.ewm.event.repository.EventRepository;
-import ru.practicum.ewm.exception.ConflictException;
-import ru.practicum.ewm.exception.NotFoundException;
-import ru.practicum.ewm.request.dto.ParticipationRequestDto;
-import ru.practicum.ewm.request.mapper.RequestMapper;
-import ru.practicum.ewm.request.model.Request;
-import ru.practicum.ewm.request.model.RequestStatus;
-import ru.practicum.ewm.request.repository.RequestRepository;
-import ru.practicum.ewm.user.model.User;
-import ru.practicum.ewm.user.repository.UserRepository;
+import ru.practicum.event.client.EventServiceClient;
+import ru.practicum.event.dto.EventFullDto;
+import ru.practicum.event.dto.EventShortDto;
+import ru.practicum.event.dto.UpdRequestStatus;
+import ru.practicum.event.enums.EventState;
+import ru.practicum.exception.ConflictException;
+import ru.practicum.exception.NotFoundException;
+import ru.practicum.mapper.RequestMapper;
+import ru.practicum.model.Request;
+import ru.practicum.repository.RequestRepository;
+import ru.practicum.request.dto.ParticipationRequestDto;
+import ru.practicum.request.enums.RequestStatus;
+import ru.practicum.user.client.UserServiceClient;
+import ru.practicum.user.dto.UserDto;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,8 +30,8 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class RequestServiceImpl implements RequestService {
 
-    private final UserRepository userRepository;
-    private final EventRepository eventRepository;
+    private final UserServiceClient userClient;
+    private final EventServiceClient eventClient;
     private final RequestRepository requestRepository;
 
     private final RequestMapper requestMapper;
@@ -36,10 +41,10 @@ public class RequestServiceImpl implements RequestService {
     public ParticipationRequestDto create(Long userId, Long eventId) {
         log.debug("Метод createRequest(); userId={}, eventId={}", userId, eventId);
 
-        User user = this.findUserBy(userId);
-        Event event = this.findEventBy(eventId);
+        UserDto userDto = findUserBy(userId);
+        EventFullDto eventDto = eventClient.getEventByIdFull(eventId);
 
-        if (eventRepository.existsByIdAndInitiatorId(eventId, userId)) {
+        if (eventDto.getInitiator().equals(userId)) {
             throw new ConflictException("Нельзя участвовать в собственном событии");
         }
 
@@ -47,28 +52,32 @@ public class RequestServiceImpl implements RequestService {
             throw new ConflictException("Request уже создан ранее");
         }
 
-        if (!event.getState().equals(EventState.PUBLISHED)) {
+        if (!eventDto.getState().equals(EventState.PUBLISHED)) {
             throw new ConflictException("Нельзя участвовать в неопубликованном событии");
         }
 
-        long limit = event.getParticipantLimit();
-        long confirm = event.getConfirmedRequests();
+        long limit = eventDto.getParticipantLimit();
+        long confirm = eventDto.getConfirmedRequests();
 
         if (limit > 0 && confirm >= limit) {
             throw new ConflictException("Достигнут лимит запросов на участие в событии");
         }
 
         RequestStatus status =
-                (!event.getRequestModeration() || limit == 0) ? RequestStatus.CONFIRMED : RequestStatus.PENDING;
+                (!eventDto.getRequestModeration() || limit == 0) ? RequestStatus.CONFIRMED : RequestStatus.PENDING;
 
         if (status == RequestStatus.CONFIRMED) {
-            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
-            eventRepository.save(event);
+            EventShortDto updatedEvent = eventClient.incrementConfirmedRequests(eventId);
+
+            if (updatedEvent == null) {
+                throw new NotFoundException(
+                        "Не удалось увеличить confirmedRequests: сервис event-service недоступен");
+            }
         }
 
         Request request = Request.builder()
-                .requester(user)
-                .event(event)
+                .requesterId(userDto.getId())
+                .eventId(eventId)
                 .status(status)
                 .build();
         request = requestRepository.save(request);
@@ -96,7 +105,7 @@ public class RequestServiceImpl implements RequestService {
         Request request = this.findRequestBy(requestId);
         request.setStatus(RequestStatus.CANCELED);
 
-        if (!request.getRequester().getId().equals(userId)) {
+        if (!request.getRequesterId().equals(userId)) {
             throw new ConflictException("User id={} не является автором этого запроса", userId);
         }
         request = requestRepository.save(request);
@@ -104,9 +113,57 @@ public class RequestServiceImpl implements RequestService {
         return requestMapper.toDto(request);
     }
 
+    @Override
+    public List<ParticipationRequestDto> getEventRequests(Long userId, Long eventId) {
+        log.debug("Сервис request-service: получение заявок для eventId={} (userId игнорируется)", eventId);
 
-    private User findUserBy(Long userId) {
-        return userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User id={} не найден", userId));
+        List<Request> requests = requestRepository.findAllByEventId(eventId);
+
+        List<ParticipationRequestDto> dtos = requests.stream()
+                .map(requestMapper::toDto)
+                .toList();
+
+        log.debug("Найдено заявок для eventId={}: {}", eventId, dtos.size());
+        return dtos;
+    }
+
+    @Override
+    public List<ParticipationRequestDto> getRequestsByIds(List<Long> requestIds) {
+        Set<Long> idSet = new HashSet<>(requestIds);
+        return requestRepository.findAllByIdIn(idSet).stream()
+                .map(requestMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public List<ParticipationRequestDto> updateRequestStatuses(Set<Long> requestIds, UpdRequestStatus newStatus) {
+        List<Request> requests = requestRepository.findAllByIdIn(requestIds);
+
+        RequestStatus status = toRequestStatus(newStatus);
+        requests.forEach(request -> request.setStatus(status));
+
+        requestRepository.saveAll(requests);
+
+        return requests.stream()
+                .map(requestMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    private RequestStatus toRequestStatus(UpdRequestStatus updStatus) {
+        return switch (updStatus) {
+            case CONFIRMED -> RequestStatus.CONFIRMED;
+            case REJECTED -> RequestStatus.REJECTED;
+        };
+    }
+
+
+    private UserDto findUserBy(Long userId) {
+        UserDto userDto = userClient.getUserById(userId);
+        if (userDto == null) {
+            throw new NotFoundException("User id={}, не существует", userId);
+        }
+        return userDto;
     }
 
     private Request findRequestBy(Long requestId) {
@@ -114,8 +171,11 @@ public class RequestServiceImpl implements RequestService {
                 .orElseThrow(() -> new NotFoundException("Request id={} не найден", requestId));
     }
 
-    private Event findEventBy(Long eventId) {
-        return eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Event id={} не найден", eventId));
+    private EventFullDto findEventBy(Long eventId) {
+        EventFullDto eventDto = eventClient.getEventByIdFull(eventId);
+        if (eventDto == null) {
+            throw new NotFoundException("Event id={} не найден", eventId);
+        }
+        return eventDto;
     }
 }

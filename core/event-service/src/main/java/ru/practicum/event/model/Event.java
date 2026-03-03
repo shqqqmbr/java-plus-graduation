@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import ru.practicum.category.model.Category;
 import ru.practicum.event.dto.Location;
+import ru.practicum.event.enums.EventState;
 
 import java.time.Instant;
 
@@ -45,7 +46,7 @@ public class Event {
     @Column(name = "event_date", nullable = false)
     private Instant eventDate;
 
-    @JoinColumn(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = false)
     @QueryInit("id")
     @ToString.Exclude
     private Long initiator;

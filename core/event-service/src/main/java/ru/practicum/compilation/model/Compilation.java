@@ -2,7 +2,7 @@ package ru.practicum.compilation.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.practicum.ewm.event.model.Event;
+import ru.practicum.event.model.Event;
 
 import java.util.ArrayList;
 import java.util.List;

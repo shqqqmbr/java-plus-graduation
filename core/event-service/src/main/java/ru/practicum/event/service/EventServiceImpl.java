@@ -14,20 +14,21 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.category.model.Category;
 import ru.practicum.category.repository.CategoryRepository;
 import ru.practicum.event.dto.*;
+import ru.practicum.event.enums.EventState;
 import ru.practicum.event.mapper.EventMapper;
 import ru.practicum.event.model.Event;
-import ru.practicum.event.model.EventState;
+import ru.practicum.event.model.QEvent;
 import ru.practicum.event.repository.EventRepository;
 import ru.practicum.ewm.ReqStatsParams;
 import ru.practicum.ewm.StatsDto;
 import ru.practicum.ewm.client.StatsClient;
+import ru.practicum.exception.ConflictException;
+import ru.practicum.exception.NotFoundException;
 import ru.practicum.request.client.RequestServiceClient;
 import ru.practicum.request.dto.ParticipationRequestDto;
 import ru.practicum.request.enums.RequestStatus;
 import ru.practicum.user.client.UserServiceClient;
 import ru.practicum.user.dto.UserDto;
-import ru.practicum.user.exception.ConflictException;
-import ru.practicum.user.exception.NotFoundException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -36,7 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import static java.time.ZoneOffset.UTC;
-import static ru.practicum.event.model.EventState.CANCELED;
+import static ru.practicum.event.enums.EventState.CANCELED;
 
 @Slf4j
 @Service
@@ -83,7 +84,7 @@ public class EventServiceImpl implements EventService {
 
         int page = from / size;
         Pageable pageable = PageRequest.of(page, size, Sort.by("eventDate").descending());
-        Page<Event> events = eventRepository.findAllByInitiatorId(userId, pageable);
+        Page<Event> events = eventRepository.findAllByInitiator(userId, pageable);
 
         return events.map(eventMapper::toShortDto).getContent();
     }
@@ -92,7 +93,7 @@ public class EventServiceImpl implements EventService {
     public EventFullDto getByUser(Long userId, Long eventId) {
         log.debug("Метод getByUser(); eventId={}, userId={}", eventId, userId);
 
-        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
+        Event event = eventRepository.findByIdAndInitiator(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Event id={} у user id={} не найдено", eventId, userId));
 
         return eventMapper.toFullDto(event);
@@ -106,7 +107,7 @@ public class EventServiceImpl implements EventService {
 
         this.checkEventDateForUpdate(updDto);
 
-        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
+        Event event = eventRepository.findByIdAndInitiator(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Event id={} не найдено; User id={} ", eventId, userId));
 
         if (event.getState().equals(EventState.PUBLISHED)) {
@@ -225,7 +226,7 @@ public class EventServiceImpl implements EventService {
                     throw new ConflictException("Нельзя отклонить подтверждённые заявки");
                 }
 
-                List<ParticipationRequestDto> rejectedDtos = requestServiceClient.updateRequestStatuses(
+                List<ParticipationRequestDto> rejectedDtos = requestServiceClient.updateRequestStatus(
                         EventRequestStatusUpdateRequest.builder()
                                 .requestIds(updDto.getRequestIds())
                                 .status(UpdRequestStatus.REJECTED)
@@ -299,7 +300,7 @@ public class EventServiceImpl implements EventService {
         List<BooleanExpression> conditions = new ArrayList<>();
 
         if (params.getUsers() != null && !params.getUsers().isEmpty()) {
-            conditions.add(event.initiatorId.in(params.getUsers()));
+            conditions.add(event.initiator.in(params.getUsers()));
         }
 
         if (params.getCategories() != null && !params.getCategories().isEmpty()) {

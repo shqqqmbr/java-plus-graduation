@@ -2,7 +2,7 @@ package ru.practicum.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.practicum.request.dto.RequestStatus;
+import ru.practicum.request.enums.RequestStatus;
 
 import java.time.Instant;
 
