@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +15,7 @@ import ru.practicum.request.dto.ParticipationRequestDto;
 import java.net.URI;
 import java.util.List;
 
-@Slf4j
+
 @Validated
 @RestController
 @RequiredArgsConstructor

@@ -1,7 +1,6 @@
 package ru.practicum.compilation.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,6 @@ import ru.practicum.exception.NotFoundException;
 import java.util.List;
 import java.util.Set;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -34,26 +32,16 @@ public class CompilationServiceImpl implements CompilationService {
     @Override
     @Transactional
     public CompilationDto create(NewCompilationDto newDto) {
-        log.debug("Метод create(); newDto={}", newDto);
-
         List<Event> events = this.findEventsBy(newDto.getEvents());
-
-        log.info(newDto.getEvents().toString());
-
         Compilation compilation = compilationMapper.toEntity(newDto);
         compilation.setEvents(events);
         compilation = compilationRepository.save(compilation);
-
-        log.info(compilation.getEvents().toString());
-
         return compilationMapper.toDto(compilation);
     }
 
     @Override
     @Transactional
     public CompilationDto update(Long compId, UpdateCompilationDto updDto) {
-        log.debug("Метод update(); compId={}, updDto={}", compId, updDto);
-
         Compilation compilation = this.findCompilationBy(compId);
         compilation = compilationMapper.updateFromDto(updDto, compilation);
 
@@ -62,25 +50,18 @@ public class CompilationServiceImpl implements CompilationService {
             compilation.setEvents(events);
         }
         compilation = compilationRepository.save(compilation);
-
-        log.debug("compilation={}", compilation);
-
         return compilationMapper.toDto(compilation);
     }
 
     @Override
     @Transactional
     public void delete(Long compId) {
-        log.debug("Метод delete(); compId={}", compId);
-
         compilationRepository.deleteById(compId);
     }
 
     // Public API:
     @Override
     public List<CompilationDto> getAllBy(Boolean pinned, Integer from, Integer size) {
-        log.debug("Метод getAllBy(); pinned={}, from={}, size={}", pinned, from, size);
-
         int page = from / size;
         Pageable pageable = PageRequest.of(page, size);
         List<Compilation> compilations = compilationRepository.findByPinned(pinned, pageable);
@@ -92,12 +73,7 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public CompilationDto getBy(Long compId) {
-        log.debug("Метод getBy(); compId={}", compId);
-
         Compilation compilation = this.findCompilationBy(compId);
-
-        log.debug("compilation={}", compilation);
-
         return compilationMapper.toDto(compilation);
     }
 

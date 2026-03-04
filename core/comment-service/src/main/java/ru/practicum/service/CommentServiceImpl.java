@@ -1,7 +1,6 @@
 package ru.practicum.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.comment.dto.CommentFullDto;
 import ru.practicum.comment.dto.CommentPublicDto;
@@ -20,7 +19,7 @@ import ru.practicum.user.dto.UserDto;
 
 import java.util.List;
 
-@Slf4j
+
 @Service
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
@@ -34,7 +33,6 @@ public class CommentServiceImpl implements CommentService {
     // Admin API:
     @Override
     public CommentFullDto hide(Long eventId, Long commentId, boolean published) {
-        log.info("Метод hide(); eventId={}; commentId={}", eventId, commentId);
 
         if (!commentRepository.existsByIdAndEventId(commentId, eventId)) {
             throw new ConflictException("Комментарий не принадлежит указанному событию; eventId={}; commentId={}",
@@ -57,7 +55,6 @@ public class CommentServiceImpl implements CommentService {
     // Public API:
     @Override
     public List<CommentPublicDto> getAllBy(Long eventId) {
-        log.info("Метод getAllBy(); eventId = {}", eventId);
 
         List<Comment> comments = commentRepository.findByEventId(eventId);
 
@@ -89,12 +86,10 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<CommentFullDto> getAllBy(Long userId, Long eventId) {
-        log.info("Метод getUserCommentsForEvent(); eventId={}; commentId={}", userId, eventId);
 
         try {
             eventServiceClient.getEventById(eventId);
         } catch (Exception e) {
-            log.warn("Событие с ID={} не найдено в сервисе событий или проблема с сервисом событий", eventId);
             throw new NotFoundException("Событие с ID=%d не найдено", eventId);
         }
 
@@ -107,7 +102,6 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public void delete(Long userId, Long commentId) {
-        log.info("Метод delete(); userId={}, commentId={}", userId, commentId);
 
         this.checkExistsUserAndComment(userId, commentId);
 
@@ -116,7 +110,6 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentFullDto update(Long userId, Long commentId, UpdCommentDto updDto) {
-        log.info("Метод update(); userId={}, commentId={}, dto: {}", userId, commentId, updDto);
 
         this.checkExistsUserAndComment(userId, commentId);
 
@@ -129,7 +122,6 @@ public class CommentServiceImpl implements CommentService {
 
 
     private void checkExistsUserAndComment(Long userId, Long commentId) {
-        log.info("Метод checkExistsUserAndComment(); userId={}, commentId={}", userId, commentId);
 
         if (!commentRepository.existsByIdAndAuthorId(commentId, userId)) {
             if (userServiceClient.getUserById(userId) == null) {

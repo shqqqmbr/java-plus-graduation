@@ -1,7 +1,6 @@
 package ru.practicum.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.event.client.EventServiceClient;
@@ -23,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -38,8 +36,6 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public ParticipationRequestDto create(Long userId, Long eventId) {
-        log.debug("Метод createRequest(); userId={}, eventId={}", userId, eventId);
-
         UserDto userDto = findUserBy(userId);
         EventDtoForRequestService eventDto = eventClient.getEventById(eventId);
 
@@ -86,8 +82,6 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<ParticipationRequestDto> getAllBy(Long userId) {
-        log.debug("Метод getAllBy(); userId={}", userId);
-
         List<Request> result = requestRepository.findAllByRequesterId(userId);
 
         return result.stream()
@@ -98,8 +92,6 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public ParticipationRequestDto cancel(Long userId, Long requestId) {
-        log.debug("Метод cancel(); userId={}, requestId={}", userId, requestId);
-
         this.findUserBy(userId);
         Request request = this.findRequestBy(requestId);
         request.setStatus(RequestStatus.CANCELED);
@@ -114,7 +106,6 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<ParticipationRequestDto> getEventRequests(Long userId, Long eventId) {
-        log.debug("Сервис request-service: получение заявок для eventId={} (userId игнорируется)", eventId);
 
         List<Request> requests = requestRepository.findAllByEventId(eventId);
 
@@ -122,7 +113,6 @@ public class RequestServiceImpl implements RequestService {
                 .map(requestMapper::toDto)
                 .toList();
 
-        log.debug("Найдено заявок для eventId={}: {}", eventId, dtos.size());
         return dtos;
     }
 

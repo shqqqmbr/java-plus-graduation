@@ -4,7 +4,6 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,7 +38,6 @@ import java.util.List;
 import static java.time.ZoneOffset.UTC;
 import static ru.practicum.event.enums.EventState.CANCELED;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -58,8 +56,6 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto create(Long userId, final NewEventDto newDto) {
-        log.debug("Метод create(); userId={}, newDto={}", userId, newDto);
-
         this.checkStartDate(newDto.getEventDate());
         UserDto userDto = userServiceClient.getUserById(userId);
         if (userDto == null) {
@@ -72,15 +68,11 @@ public class EventServiceImpl implements EventService {
         event.setInitiatorId(userDto.getId());
         event.setCategory(category);
         event = eventRepository.save(event);
-
-        log.debug("Создан event={}", event);
-
         return eventMapper.toFullDto(event);
     }
 
     @Override
     public List<EventShortDto> getAllByUser(Long userId, int from, int size) {
-        log.debug("Метод getAllByUser(); userId={}", userId);
 
         int page = from / size;
         Pageable pageable = PageRequest.of(page, size, Sort.by("eventDate").descending());
@@ -91,7 +83,6 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getByUser(Long userId, Long eventId) {
-        log.debug("Метод getByUser(); eventId={}, userId={}", eventId, userId);
 
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Event id={} у user id={} не найдено", eventId, userId));
@@ -102,20 +93,12 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto updateByUser(Long userId, Long eventId, UpdEventUserRequest updDto) {
-        log.debug("Метод userUpdate(); userId={}, eventId: {}, dto={}",
-                userId, eventId, updDto);
-
         this.checkEventDateForUpdate(updDto);
-
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Event id={} не найдено; User id={} ", eventId, userId));
-
         if (event.getState().equals(EventState.PUBLISHED)) {
             throw new ConflictException("Event id={} нельзя изменить; его status={}", eventId, event.getState());
         }
-
-        log.debug("Найден Event в репозитории; event={}", event);
-
         if (!(event.getState().equals(CANCELED) || event.getState().equals(EventState.PENDING))) {
             throw new ConflictException("Event id={} нельзя обновить пока оно опубликовано", eventId);
         }
@@ -132,16 +115,11 @@ public class EventServiceImpl implements EventService {
 
         eventMapper.updateFromDto(updDto, event);
         event = eventRepository.save(event);
-
-        log.debug("Метод userUpdate(); Event обновлен в репозитории event={}", event);
-
         return eventMapper.toFullDto(event);
     }
 
     @Override
     public List<ParticipationRequestDto> getEventRequests(Long userId, Long eventId) {
-        log.debug("Метод getEventRequests(); userId={}, eventId={}", userId, eventId);
-
         List<ParticipationRequestDto> requests = requestServiceClient.getEventRequests(userId, eventId);
 
         return requests;
@@ -150,9 +128,6 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public UpdRequestsStatusResult updateRequests(Long userId, Long eventId, EventRequestStatusUpdateRequest updDto) {
-        log.debug("Метод updateRequests(), userId={}, eventId={}", userId, eventId);
-
-
         Event event = this.findEventBy(eventId);
         List<ParticipationRequestDto> requestDtos = requestServiceClient.getRequestsById(
                 updDto.getRequestIds().stream().toList()
@@ -210,7 +185,6 @@ public class EventServiceImpl implements EventService {
                     );
                 }
 
-                // Обновляем количество подтверждённых
                 event.setConfirmedRequests(event.getConfirmedRequests() + confirmedDtos.size());
                 eventRepository.save(event);
 
@@ -250,8 +224,6 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto updateByAdmin(Long eventId, UpdEventAdminRequest updDto) {
-        log.debug("Метод adminUpdateEvent(); eventId: {}, dto={}", eventId, updDto);
-
         Event event = this.findEventBy(eventId);
 
         eventMapper.updateFromDto(updDto, event);
@@ -269,9 +241,6 @@ public class EventServiceImpl implements EventService {
                         throw new ConflictException("Event id={} нельзя опубликовать; его status={}",
                                 eventId, event.getState());
                     }
-
-                    log.debug("Для Event назначен статус={}, время публикации publishedOn={}",
-                            event.getState(), event.getPublishedOn());
                 }
                 case REJECT_EVENT -> {
                     if (event.getState().equals(EventState.PENDING)) {
@@ -280,22 +249,16 @@ public class EventServiceImpl implements EventService {
                         throw new ConflictException("Опубликованные Event не могут быть отклонены");
                     }
 
-                    log.debug("Для Event назначен статус={}", event.getState());
                 }
             }
         }
 
         event = eventRepository.save(event);
-
-        log.debug("Метод adminUpdate(); Event обновлен в репозитории event={}", event);
-
         return eventMapper.toFullDto(event);
     }
 
     @Override
     public List<EventFullDto> searchForAdmin(AdminEventSearchParams params) {
-        log.debug("Метод adminSearchEvents; {}", params);
-
         QEvent event = QEvent.event;
         List<BooleanExpression> conditions = new ArrayList<>();
 
@@ -325,8 +288,6 @@ public class EventServiceImpl implements EventService {
                 .reduce(BooleanExpression::and)
                 .orElse(Expressions.TRUE);
 
-        log.debug("{}", finalCondition);
-
         int page = params.getFrom() / params.getSize();
         Pageable pageable = PageRequest.of(page, params.getSize());
 
@@ -339,8 +300,6 @@ public class EventServiceImpl implements EventService {
     // Public API:
     @Override
     public EventFullDto getPublicBy(Long eventId, HttpServletRequest request) {
-        log.debug("Метод getPublicById(); eventId={}", eventId);
-
         Event event = eventRepository.findByIdAndState(eventId, EventState.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException("Опубликованного Event id={} нет", eventId));
 
@@ -352,8 +311,6 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventFullDto> getPublicBy(UserEventSearchParams params, HttpServletRequest request) {
-        log.debug("Метод publicSearchMany; {}", params);
-
         QEvent event = QEvent.event;
         List<BooleanExpression> conditions = new ArrayList<>();
 
@@ -394,9 +351,6 @@ public class EventServiceImpl implements EventService {
         BooleanExpression finalCondition = conditions.stream()
                 .reduce(BooleanExpression::and)
                 .orElse(Expressions.TRUE);
-
-        log.debug("{}", finalCondition);
-
         int page = params.getFrom() / params.getSize();
 
         Pageable pageable = null;
@@ -434,38 +388,28 @@ public class EventServiceImpl implements EventService {
     }
 
     private Category findCategoryBy(Long categoryId) {
-        log.debug("Поиск Category id={} в репозитории", categoryId);
-
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Объект Category id={} не найден", categoryId));
     }
 
     private Event findEventBy(Long eventId) {
-        log.debug("Поиск Event id={} в репозитории", eventId);
-
         return eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Объект Event id={} не найден", eventId));
     }
 
     private void checkStartDate(LocalDateTime eventDate) {
-        log.debug("Проверка даты при СОЗДАНИИ");
-
         if (eventDate != null && eventDate.isBefore(LocalDateTime.now().plusHours(2))) {
             throw new ConflictException("Дата Event при СОЗДАНИИ должна быть в будущем, мин. через 2 часа");
         }
     }
 
     private void checkEventDateForUpdate(UpdEventUserRequest updDto) {
-        log.debug("Проверка даты Event при ОБНОВЛЕНИИ");
-
         if (updDto.getEventDate() != null) {
             this.checkStartDate(updDto.getEventDate());
         }
     }
 
     private void checkEventDateForPublish(LocalDateTime eventDate) {
-        log.debug("Проверка даты Event при ПУБЛИКАЦИИ");
-
         if (eventDate != null && eventDate.isBefore(LocalDateTime.now().plusHours(1))) {
             throw new ConflictException("Дата Event при ПУБЛИКАЦИИ должна быть в будущем, мин. через 1 час");
         }

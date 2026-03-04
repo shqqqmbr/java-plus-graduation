@@ -1,7 +1,6 @@
 package ru.practicum.controller;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.EventRequestStatusUpdateRequest;
@@ -13,7 +12,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/internal/requests")
 @RequiredArgsConstructor
-@Slf4j
 public class InternalRequestController {
 
     private final RequestService requestService;
@@ -22,9 +20,6 @@ public class InternalRequestController {
     public ResponseEntity<List<ParticipationRequestDto>> getEventRequests(
             @RequestParam("userId") Long userId,
             @PathVariable("eventId") Long eventId) {
-
-        log.debug("Внутренний контроллер: получение заявок для userId={}, eventId={}", userId, eventId);
-
         List<ParticipationRequestDto> requests = requestService.getEventRequests(userId, eventId);
 
         return ResponseEntity.ok(requests);
