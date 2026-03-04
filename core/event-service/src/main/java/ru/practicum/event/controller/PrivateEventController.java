@@ -28,7 +28,6 @@ public class PrivateEventController {
     @PostMapping
     public ResponseEntity<EventFullDto> create(@PathVariable("userId") @NotNull @Positive Long userId,
                                                @RequestBody @Valid final NewEventDto newDto) {
-        log.debug("Метод create(); userId = {}; newDto = {}", userId, newDto);
 
         EventFullDto result = eventService.create(userId, newDto);
         return ResponseEntity
@@ -40,7 +39,6 @@ public class PrivateEventController {
     public ResponseEntity<List<EventShortDto>> findAll(@PathVariable("userId") @Positive Long userId,
                                                        @RequestParam(defaultValue = "0") @PositiveOrZero int from,
                                                        @RequestParam(defaultValue = "10") @Positive int size) {
-        log.debug("Метод findAll(); userId={}, from={}, size={}", userId, from, size);
 
         List<EventShortDto> result = eventService.getAllByUser(userId, from, size);
         return ResponseEntity.ok(result);
@@ -49,7 +47,6 @@ public class PrivateEventController {
     @GetMapping("/{eventId}")
     public ResponseEntity<EventFullDto> find(@PathVariable("userId") @Positive Long userId,
                                              @PathVariable("eventId") @Positive Long eventId) {
-        log.debug("Метод find(); userId={}, eventId={}", userId, eventId);
 
         EventFullDto result = eventService.getByUser(userId, eventId);
         return ResponseEntity.ok(result);
@@ -59,7 +56,6 @@ public class PrivateEventController {
     public ResponseEntity<EventFullDto> update(@PathVariable("userId") @Positive Long userId,
                                                @PathVariable("eventId") @Positive Long eventId,
                                                @RequestBody @Valid final UpdEventUserRequest updDto) {
-        log.debug("Метод update(); userId={}, eventId={}, updDto={}", userId, eventId, updDto);
 
         EventFullDto result = eventService.updateByUser(userId, eventId, updDto);
         return ResponseEntity.ok(result);
@@ -68,7 +64,6 @@ public class PrivateEventController {
     @GetMapping("/{eventId}/requests")
     public ResponseEntity<List<ParticipationRequestDto>> getUserRequests(@PathVariable @Positive Long userId,
                                                                          @PathVariable @Positive Long eventId) {
-        log.debug("Метод getUserRequests(); userId={}, eventId={}", userId, eventId);
 
         List<ParticipationRequestDto> result = eventService.getEventRequests(userId, eventId);
         return ResponseEntity.ok(result);
@@ -80,7 +75,6 @@ public class PrivateEventController {
             @PathVariable @Positive Long eventId,
             @RequestBody @Valid EventRequestStatusUpdateRequest updDto
     ) {
-        log.debug("Метод updateRequest(); userId={}, eventId={}", userId, eventId);
 
         UpdRequestsStatusResult result = eventService.updateRequests(userId, eventId, updDto);
         return ResponseEntity.ok(result);

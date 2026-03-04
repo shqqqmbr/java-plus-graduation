@@ -1,7 +1,6 @@
 package ru.practicum.category.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,6 @@ import ru.practicum.exception.NotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -33,8 +31,6 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public CategoryDto add(CategoryRequestDto newDto) {
-        log.debug("Метод add(); categoryRequestDto: {}", newDto);
-
         this.validateCategoryNameExists(newDto.getName());
 
         Category category = categoryMapper.toEntity(newDto);
@@ -47,7 +43,6 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public CategoryDto update(Long categoryId, CategoryRequestDto updDto) {
-        log.debug("Метод update(); categoryId: {}, dto: {}", categoryId, updDto);
 
         this.validateCategoryNameExists(updDto.getName(), categoryId);
 
@@ -61,7 +56,6 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void delete(Long categoryId) {
-        log.debug("Метод delete(); categoryId: {}", categoryId);
 
         this.validateCategoryExists(categoryId);
 
@@ -75,7 +69,6 @@ public class CategoryServiceImpl implements CategoryService {
     // Public API:
     @Override
     public CategoryDto getById(Long categoryId) {
-        log.debug("Метод getById(); categoryId: {}", categoryId);
 
         Category category = this.findCategoryById(categoryId);
 
@@ -84,7 +77,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<CategoryDto> getAll(int from, int size) {
-        log.debug("Метод getAll(); from: {}, size: {}", from, size);
 
         int page = from / size;
         Pageable pageable = PageRequest.of(page, size);

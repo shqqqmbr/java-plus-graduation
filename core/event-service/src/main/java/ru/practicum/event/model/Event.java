@@ -1,6 +1,5 @@
 package ru.practicum.event.model;
 
-import com.querydsl.core.annotations.QueryInit;
 import jakarta.persistence.*;
 import lombok.*;
 import ru.practicum.category.model.Category;
@@ -23,49 +22,58 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 2000, nullable = false)
+    @Column(length = 2000,
+            nullable = false)
     private String annotation;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    @QueryInit("id")
+    @JoinColumn(name = "category_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_events_categories",
+                    value = ConstraintMode.CONSTRAINT))
     @ToString.Exclude
     private Category category;
 
-    @Column(name = "confirmed_requests", nullable = false, columnDefinition = "integer default 0")
+    @Column(name = "confirmed_requests",
+            nullable = false,
+            columnDefinition = "integer default 0")
     @Builder.Default
     private Long confirmedRequests = 0L;
 
-    @Column(name = "created_on", nullable = false)
+    @Column(name = "created_on",
+            nullable = false)
     @Builder.Default
     private Instant createdOn = Instant.now();
 
-    @Column(length = 7000, nullable = false)
+    @Column(length = 7000,
+            nullable = false)
     private String description;
 
-    @Column(name = "event_date", nullable = false)
+    @Column(name = "event_date",
+            nullable = false)
     private Instant eventDate;
 
-    @Column(name = "user_id", nullable = false)
-    @QueryInit("id")
-    @ToString.Exclude
-    private Long initiator;
+    @Column(name = "initiator_id", nullable = false)
+    private Long initiatorId;
 
     @Embedded
     private Location location;
 
-    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Column(nullable = false,
+            columnDefinition = "boolean default false")
     @Builder.Default
     private Boolean paid = false;
 
-    @Column(name = "participant_limit", columnDefinition = "integer default 0")
+    @Column(name = "participant_limit",
+            columnDefinition = "integer default 0")
     @Builder.Default
     private Integer participantLimit = 0;
 
     @Column(name = "published_on")
     private Instant publishedOn;
 
-    @Column(name = "request_moderation", columnDefinition = "boolean default true")
+    @Column(name = "request_moderation",
+            columnDefinition = "boolean default true")
     @Builder.Default
     private Boolean requestModeration = true;
 
@@ -74,10 +82,12 @@ public class Event {
     @Builder.Default
     private EventState state = EventState.PENDING;
 
-    @Column(length = 120, nullable = false)
+    @Column(length = 120,
+            nullable = false)
     private String title;
 
-    @Column(nullable = false, columnDefinition = "integer default 0")
+    @Column(nullable = false,
+            columnDefinition = "integer default 0")
     @Builder.Default
     private Long views = 0L;
 }

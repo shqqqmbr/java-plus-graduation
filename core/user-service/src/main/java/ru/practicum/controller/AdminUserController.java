@@ -1,6 +1,7 @@
 package ru.practicum.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
@@ -46,5 +47,17 @@ public class AdminUserController {
 
         userService.delete(userId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/{userId}")
+    @ResponseStatus(HttpStatus.OK)
+    public UserDto getUserById(@PathVariable @NotNull Long userId) {
+        return userService.getUserById(userId);
+    }
+
+    @GetMapping("/by-ids")
+    @ResponseStatus(HttpStatus.OK)
+    public List<UserDto> getUsersByIds(@RequestParam(name = "ids", required = false) List<Long> ids) {
+        return userService.getUsersByIds(ids);
     }
 }

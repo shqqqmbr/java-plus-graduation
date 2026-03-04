@@ -26,7 +26,6 @@ public class AdminEventController {
     @PatchMapping("/{eventId}")
     public ResponseEntity<EventFullDto> adminUpdate(@PathVariable @Positive Long eventId,
                                                     @RequestBody @Valid UpdEventAdminRequest updDto) {
-        log.debug("Метод adminUpdateEvent(); eventId: {}, dto={}", eventId, updDto);
 
         EventFullDto eventFullDto = eventService.updateByAdmin(eventId, updDto);
         return ResponseEntity.ok(eventFullDto);
@@ -34,7 +33,6 @@ public class AdminEventController {
 
     @GetMapping
     public ResponseEntity<List<EventFullDto>> adminSearch(@Valid @ModelAttribute AdminEventSearchParams params) {
-        log.debug("Метод adminSearchEvents; {}", params);
 
         List<EventFullDto> events = eventService.searchForAdmin(params);
         return ResponseEntity.ok(events);

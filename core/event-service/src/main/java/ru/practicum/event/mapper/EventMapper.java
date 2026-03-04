@@ -60,7 +60,7 @@ public interface EventMapper {
     void updateFromDto(UpdEventAdminRequest updEventAdminRequest, @MappingTarget Event event);
 
     @Mapping(target = "id", source = "id")
-    @Mapping(target = "initiatorId", source = "initiator")
+    @Mapping(target = "initiatorId", source = "initiatorId")
     @Mapping(target = "state", source = "state")
     @Mapping(target = "participantLimit", source = "participantLimit")
     @Mapping(target = "confirmedRequests", source = "confirmedRequests")

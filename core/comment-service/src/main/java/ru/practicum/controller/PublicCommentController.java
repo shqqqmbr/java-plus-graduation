@@ -24,7 +24,6 @@ public class PublicCommentController {
 
     @GetMapping
     public ResponseEntity<List<CommentPublicDto>> getComments(@PathVariable Long eventId) {
-        log.info("Метод getComments(); eventId={}", eventId);
 
         List<CommentPublicDto> result = commentService.getAllBy(eventId);
         return ResponseEntity.ok(result);

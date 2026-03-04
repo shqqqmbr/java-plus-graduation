@@ -5,8 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.event.client.EventServiceClient;
-import ru.practicum.event.dto.EventFullDto;
-import ru.practicum.event.dto.EventShortDto;
+import ru.practicum.event.dto.EventDtoForRequestService;
 import ru.practicum.event.dto.UpdRequestStatus;
 import ru.practicum.event.enums.EventState;
 import ru.practicum.exception.ConflictException;
@@ -42,9 +41,9 @@ public class RequestServiceImpl implements RequestService {
         log.debug("Метод createRequest(); userId={}, eventId={}", userId, eventId);
 
         UserDto userDto = findUserBy(userId);
-        EventFullDto eventDto = eventClient.getEventByIdFull(eventId);
+        EventDtoForRequestService eventDto = eventClient.getEventById(eventId);
 
-        if (eventDto.getInitiator().equals(userId)) {
+        if (eventDto.getInitiatorId().equals(userId)) {
             throw new ConflictException("Нельзя участвовать в собственном событии");
         }
 
@@ -67,7 +66,7 @@ public class RequestServiceImpl implements RequestService {
                 (!eventDto.getRequestModeration() || limit == 0) ? RequestStatus.CONFIRMED : RequestStatus.PENDING;
 
         if (status == RequestStatus.CONFIRMED) {
-            EventShortDto updatedEvent = eventClient.incrementConfirmedRequests(eventId);
+            EventDtoForRequestService updatedEvent = eventClient.incrementConfirmedRequests(eventId);
 
             if (updatedEvent == null) {
                 throw new NotFoundException(

@@ -15,15 +15,13 @@ import ru.practicum.service.CommentService;
 @RequestMapping("/admin/events/{eventId}/comments/{commentId}")
 public class AdminCommentController {
 
-    private final CommentService commentService;
+    private final CommentService serviceService;
 
     @PatchMapping
     public ResponseEntity<CommentFullDto> patchComment(@PathVariable Long eventId,
                                                        @PathVariable Long commentId,
                                                        @RequestParam boolean published) {
-        log.info("Метод patchComment(); eventId={}, commentId={}", eventId, commentId);
-
-        CommentFullDto result = commentService.hide(eventId, commentId, published);
+        CommentFullDto result = serviceService.hide(eventId, commentId, published);
         return ResponseEntity.ok(result);
     }
 }

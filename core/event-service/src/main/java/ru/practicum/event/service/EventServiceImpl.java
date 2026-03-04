@@ -69,7 +69,7 @@ public class EventServiceImpl implements EventService {
 
         Event event = eventMapper.toEntity(newDto);
         event.setLocation(newDto.getLocation());
-        event.setInitiator(userDto.getId());
+        event.setInitiatorId(userDto.getId());
         event.setCategory(category);
         event = eventRepository.save(event);
 
@@ -84,7 +84,7 @@ public class EventServiceImpl implements EventService {
 
         int page = from / size;
         Pageable pageable = PageRequest.of(page, size, Sort.by("eventDate").descending());
-        Page<Event> events = eventRepository.findAllByInitiator(userId, pageable);
+        Page<Event> events = eventRepository.findAllByInitiatorId(userId, pageable);
 
         return events.map(eventMapper::toShortDto).getContent();
     }
@@ -93,7 +93,7 @@ public class EventServiceImpl implements EventService {
     public EventFullDto getByUser(Long userId, Long eventId) {
         log.debug("Метод getByUser(); eventId={}, userId={}", eventId, userId);
 
-        Event event = eventRepository.findByIdAndInitiator(eventId, userId)
+        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Event id={} у user id={} не найдено", eventId, userId));
 
         return eventMapper.toFullDto(event);
@@ -107,7 +107,7 @@ public class EventServiceImpl implements EventService {
 
         this.checkEventDateForUpdate(updDto);
 
-        Event event = eventRepository.findByIdAndInitiator(eventId, userId)
+        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Event id={} не найдено; User id={} ", eventId, userId));
 
         if (event.getState().equals(EventState.PUBLISHED)) {
@@ -300,7 +300,7 @@ public class EventServiceImpl implements EventService {
         List<BooleanExpression> conditions = new ArrayList<>();
 
         if (params.getUsers() != null && !params.getUsers().isEmpty()) {
-            conditions.add(event.initiator.in(params.getUsers()));
+            conditions.add(event.initiatorId.in(params.getUsers()));
         }
 
         if (params.getCategories() != null && !params.getCategories().isEmpty()) {

@@ -27,7 +27,6 @@ public class PrivateCommentController {
     public ResponseEntity<CommentFullDto> addComment(@RequestBody @Valid NewCommentDto dto,
                                                      @PathVariable Long eventId,
                                                      @PathVariable Long userId) {
-        log.info("Метод addComment(); even");
 
         CommentFullDto result = commentService.add(dto, eventId, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
@@ -36,7 +35,6 @@ public class PrivateCommentController {
     @GetMapping
     public ResponseEntity<List<CommentFullDto>> getAllCommentsBy(@PathVariable Long userId,
                                                                  @PathVariable Long eventId) {
-        log.info("Метод getCommentsByUserId(); userId={} eventId={}", userId, eventId);
 
         List<CommentFullDto> result = commentService.getAllBy(userId, eventId);
         return ResponseEntity.ok(result);
@@ -47,7 +45,6 @@ public class PrivateCommentController {
     public void deleteComment(@PathVariable Long userId,
                               @PathVariable Long eventId,
                               @PathVariable Long commentId) {
-        log.info("Метод deleteComment(); userId={}, eventId={}, commentId={}", userId, eventId, commentId);
 
         commentService.delete(userId, commentId);
     }
@@ -57,7 +54,6 @@ public class PrivateCommentController {
                                                         @PathVariable Long eventId,
                                                         @PathVariable Long commentId,
                                                         @Valid @RequestBody UpdCommentDto updDto) {
-        log.info("Метод updateComment(); updCommentDto={}", updDto);
 
         CommentFullDto result = commentService.update(userId, commentId, updDto);
         return ResponseEntity.ok(result);

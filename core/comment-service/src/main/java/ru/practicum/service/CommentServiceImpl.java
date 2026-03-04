@@ -9,13 +9,14 @@ import ru.practicum.comment.dto.NewCommentDto;
 import ru.practicum.comment.dto.UpdCommentDto;
 import ru.practicum.comment.enums.CommentState;
 import ru.practicum.event.client.EventServiceClient;
-import ru.practicum.event.dto.EventShortDto;
+import ru.practicum.event.dto.EventDtoForRequestService;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.mapper.CommentMapper;
 import ru.practicum.model.Comment;
 import ru.practicum.repository.CommentRepository;
 import ru.practicum.user.client.UserServiceClient;
+import ru.practicum.user.dto.UserDto;
 
 import java.util.List;
 
@@ -24,8 +25,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
 
-    private final UserServiceClient userClient;
-    private final EventServiceClient eventClient;
+    private final UserServiceClient userServiceClient;
+    private final EventServiceClient eventServiceClient;
     private final CommentRepository commentRepository;
 
     private final CommentMapper commentMapper;
@@ -69,16 +70,17 @@ public class CommentServiceImpl implements CommentService {
     // Private API:
     @Override
     public CommentFullDto add(NewCommentDto dto, Long eventId, Long userId) {
-        log.info("Метод add(); eventId={}, userId={}; dto={}", eventId, userId, dto);
 
-        EventShortDto event = eventClient.getEventById(eventId);
-        if (event.getInitiator().getId().equals(userId)) {
-            throw new ConflictException("Инициатор не может комментировать свои события; eventId={}, userId={}",
-                    eventId, userId);
+        EventDtoForRequestService eventDto = eventServiceClient.getEventById(eventId);
+        if (eventDto.getInitiatorId().equals(userId)) {
+            throw new ConflictException(
+                    "Инициатор не может комментировать свои события; eventId={}, userId={}", eventId, userId);
         }
 
+        UserDto userDto = userServiceClient.getUserById(userId);
+
         Comment comment = commentMapper.toEntity(dto);
-        comment.setAuthorId(userId);
+        comment.setAuthorId(userDto.getId());
         comment.setEventId(eventId);
         comment = commentRepository.save(comment);
 
@@ -88,6 +90,13 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public List<CommentFullDto> getAllBy(Long userId, Long eventId) {
         log.info("Метод getUserCommentsForEvent(); eventId={}; commentId={}", userId, eventId);
+
+        try {
+            eventServiceClient.getEventById(eventId);
+        } catch (Exception e) {
+            log.warn("Событие с ID={} не найдено в сервисе событий или проблема с сервисом событий", eventId);
+            throw new NotFoundException("Событие с ID=%d не найдено", eventId);
+        }
 
         List<Comment> comments = commentRepository.findAllByEventIdAndAuthorId(eventId, userId);
 
@@ -123,7 +132,7 @@ public class CommentServiceImpl implements CommentService {
         log.info("Метод checkExistsUserAndComment(); userId={}, commentId={}", userId, commentId);
 
         if (!commentRepository.existsByIdAndAuthorId(commentId, userId)) {
-            if (userClient.getUserById(userId) == null) {
+            if (userServiceClient.getUserById(userId) == null) {
                 throw new NotFoundException("User id={}, не существует", userId);
             } else if (!commentRepository.existsById(commentId)) {
                 throw new NotFoundException("Comment id={}, не существует", commentId);

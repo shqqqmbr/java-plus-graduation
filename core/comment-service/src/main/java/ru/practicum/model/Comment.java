@@ -33,16 +33,10 @@ public class Comment {
     @Builder.Default
     private Instant publishedOn = Instant.now();
 
-    @JoinColumn(name = "user_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "fk_comments_users"))
-    @ToString.Exclude
+    @Column(name = "author_id", nullable = false)
     private Long authorId;
 
-    @JoinColumn(name = "event_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "fk_comments_events"))
-    @ToString.Exclude
+    @Column(name = "event_id", nullable = false)
     private Long eventId;
 
     @Enumerated(EnumType.STRING)
