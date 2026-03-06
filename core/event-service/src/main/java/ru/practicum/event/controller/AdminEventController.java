@@ -22,17 +22,17 @@ public class AdminEventController {
     private final EventService eventService;
 
     @PatchMapping("/{eventId}")
-    public ResponseEntity<EventFullDto> adminUpdate(@PathVariable @Positive Long eventId,
+    public EventFullDto adminUpdate(@PathVariable @Positive Long eventId,
                                                     @RequestBody @Valid UpdEventAdminRequest updDto) {
 
         EventFullDto eventFullDto = eventService.updateByAdmin(eventId, updDto);
-        return ResponseEntity.ok(eventFullDto);
+        return eventFullDto;
     }
 
     @GetMapping
-    public ResponseEntity<List<EventFullDto>> adminSearch(@Valid @ModelAttribute AdminEventSearchParams params) {
+    public List<EventFullDto> adminSearch(@Valid @ModelAttribute AdminEventSearchParams params) {
 
         List<EventFullDto> events = eventService.searchForAdmin(params);
-        return ResponseEntity.ok(events);
+        return events;
     }
 }

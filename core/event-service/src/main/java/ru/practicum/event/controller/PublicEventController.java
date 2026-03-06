@@ -21,35 +21,31 @@ public class PublicEventController {
     private final EventService eventService;
 
     @GetMapping("/{eventId}")
-    public ResponseEntity<EventFullDto> publicSearchOne(@PathVariable @Positive Long eventId,
+    public EventFullDto publicSearchOne(@PathVariable @Positive Long eventId,
                                                         HttpServletRequest request) {
         EventFullDto event = eventService.getPublicBy(eventId, request);
-        return ResponseEntity.ok(event);
+        return event;
     }
 
     @GetMapping
-    public ResponseEntity<List<EventFullDto>> publicSearchMany(@Valid @ModelAttribute UserEventSearchParams params,
+    public List<EventFullDto> publicSearchMany(@Valid @ModelAttribute UserEventSearchParams params,
                                                                HttpServletRequest request) {
         List<EventFullDto> events = eventService.getPublicBy(params, request);
-        return ResponseEntity.ok(events);
+        return events;
     }
 
     @GetMapping("/internal/{eventId}")
-    public ResponseEntity<EventDtoForRequestService> getEventById(
+    public EventDtoForRequestService getEventById(
             @PathVariable Long eventId) {
         EventDtoForRequestService dto = eventService.getEventDtoForRequestService(eventId);
 
-        return ResponseEntity.ok(dto);
+        return dto;
     }
 
-    @PutMapping("internal/{eventId}/increment-confirmed")
-    public ResponseEntity<EventDtoForRequestService> incrementConfirmedRequests(
+    @PutMapping("/internal/{eventId}/increment-confirmed")
+    public EventDtoForRequestService incrementConfirmedRequests(
             @PathVariable Long eventId) {
-        try {
-            EventDtoForRequestService updatedDto = eventService.incrementConfirmedRequests(eventId);
-            return ResponseEntity.ok(updatedDto);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).build();
-        }
+        EventDtoForRequestService updatedDto = eventService.incrementConfirmedRequests(eventId);
+        return updatedDto;
     }
 }
