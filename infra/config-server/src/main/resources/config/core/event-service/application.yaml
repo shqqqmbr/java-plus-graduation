@@ -5,8 +5,6 @@ spring:
     password: event
     driver-class-name: org.postgresql.Driver
   jpa:
-    hibernate:
-      ddl-auto: create-drop
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
     properties:
