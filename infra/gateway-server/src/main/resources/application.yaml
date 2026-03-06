@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:0}
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
@@ -8,18 +8,43 @@ spring:
     import: "configserver:"
   cloud:
     config:
-      uri: http://config-server:8888
+      uri: ${SPRING_CLOUD_CONFIG_URI:http://localhost:8888}
       discovery:
         enabled: true
         serviceId: config-server
       fail-fast: false
       retry:
-        useRandomPolicy: true
-        max-interval: 6000
+        max-attempts: 10
+        initial-interval: 2000
+        multiplier: 1.5
 
 eureka:
+  instance:
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:gateway-server}
+    prefer-ip-address: true
   client:
     serviceUrl:
-      defaultZone: http://${eureka.instance.hostname:localhost}:${eureka.instance.port:8761}/eureka/
-    initial-instance-info-replication-interval-seconds: 30
-    registry-fetch-interval-seconds: 30
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+    initial-instance-info-replication-interval-seconds: 10
+    registry-fetch-interval-seconds: 10
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,routes
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+    routes:
+      enabled: true
+
+info:
+  app:
+    name: ${spring.application.name}
+    port: ${server.port}
