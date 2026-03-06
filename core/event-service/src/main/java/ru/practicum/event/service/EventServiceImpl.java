@@ -311,6 +311,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventFullDto> getPublicBy(UserEventSearchParams params, HttpServletRequest request) {
+        validateSearchParams(params);
+
         QEvent event = QEvent.event;
         List<BooleanExpression> conditions = new ArrayList<>();
 
@@ -319,7 +321,8 @@ public class EventServiceImpl implements EventService {
         if (params.getText() != null && !params.getText().isEmpty()) {
             conditions.add(
                     event.annotation.containsIgnoreCase(params.getText())
-                            .or(event.description.containsIgnoreCase(params.getText())));
+                            .or(event.description.containsIgnoreCase(params.getText()))
+            );
         }
 
         if (params.getCategories() != null && !params.getCategories().isEmpty()) {
@@ -344,29 +347,57 @@ public class EventServiceImpl implements EventService {
             conditions.add(event.eventDate.after(Instant.now()));
         }
 
-        if (params.getOnlyAvailable() != null) {
-            conditions.add(event.confirmedRequests.lt(event.participantLimit.longValue()));
+        if (params.getOnlyAvailable() != null && params.getOnlyAvailable()) {
+            conditions.add(
+                    event.participantLimit.eq(0)
+                            .or(event.confirmedRequests.lt(event.participantLimit))
+            );
         }
 
         BooleanExpression finalCondition = conditions.stream()
                 .reduce(BooleanExpression::and)
                 .orElse(Expressions.TRUE);
+
         int page = params.getFrom() / params.getSize();
-
-        Pageable pageable = null;
-
-        switch (params.getSort()) {
-            case EVENT_DATE -> pageable =
-                    PageRequest.of(page, params.getSize(), Sort.by(Sort.Direction.ASC, "eventDate"));
-            case VIEWS -> pageable =
-                    PageRequest.of(page, params.getSize(), Sort.by(Sort.Direction.DESC, "views"));
-        }
+        Pageable pageable = createPageable(params, page);
 
         Page<Event> events = eventRepository.findAll(finalCondition, pageable);
 
         statsClient.hit(request);
 
         return events.map(eventMapper::toFullDto).getContent();
+    }
+
+    private void validateSearchParams(UserEventSearchParams params) {
+        if (params.getSize() <= 0) {
+            throw new IllegalArgumentException("Size must be positive");
+        }
+
+        if (params.getFrom() < 0) {
+            throw new IllegalArgumentException("From must be non-negative");
+        }
+
+        if (params.getRangeStart() != null && params.getRangeEnd() != null) {
+            if (params.getRangeStart().isAfter(params.getRangeEnd())) {
+                throw new IllegalArgumentException("Start date must be before end date");
+            }
+        }
+    }
+
+    private Pageable createPageable(UserEventSearchParams params, int page) {
+        return switch (params.getSort()) {
+            case EVENT_DATE -> PageRequest.of(
+                    page,
+                    params.getSize(),
+                    Sort.by(Sort.Direction.ASC, "eventDate")
+            );
+            case VIEWS -> PageRequest.of(
+                    page,
+                    params.getSize(),
+                    Sort.by(Sort.Direction.DESC, "views")
+            );
+            default -> PageRequest.of(page, params.getSize());
+        };
     }
 
     @Override

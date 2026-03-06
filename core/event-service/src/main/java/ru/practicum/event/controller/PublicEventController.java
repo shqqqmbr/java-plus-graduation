@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.EventDtoForRequestService;
@@ -21,6 +22,7 @@ public class PublicEventController {
     private final EventService eventService;
 
     @GetMapping("/{eventId}")
+    @ResponseStatus(HttpStatus.OK)
     public EventFullDto publicSearchOne(@PathVariable @Positive Long eventId,
                                                         HttpServletRequest request) {
         EventFullDto event = eventService.getPublicBy(eventId, request);

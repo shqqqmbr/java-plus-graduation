@@ -6,21 +6,17 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import ru.practicum.exception.ApiError;
 import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.exception.dto.ErrorResponse;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,13 +24,18 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({NotFoundException.class, BadRequestException.class, ConflictException.class})
-    public ResponseEntity<ErrorResponse> handleCustomExceptions(ApiError ex, HttpServletRequest request) {
-        HttpStatus status = switch (ex) {
-            case NotFoundException ignored -> HttpStatus.NOT_FOUND;
-            case BadRequestException ignored -> HttpStatus.BAD_REQUEST;
-            case ConflictException ignored -> HttpStatus.CONFLICT;
-            default -> HttpStatus.INTERNAL_SERVER_ERROR;
-        };
+    public ResponseEntity<ErrorResponse> handleCustomExceptions(RuntimeException ex, HttpServletRequest request) {
+        HttpStatus status;
+        
+        if (ex instanceof NotFoundException) {
+            status = HttpStatus.NOT_FOUND;
+        } else if (ex instanceof BadRequestException) {
+            status = HttpStatus.BAD_REQUEST;
+        } else if (ex instanceof ConflictException) {
+            status = HttpStatus.CONFLICT;
+        } else {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
 
         log.warn("{}: {}", status, ex.getMessage());
 

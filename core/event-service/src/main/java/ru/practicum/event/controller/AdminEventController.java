@@ -33,6 +33,6 @@ public class AdminEventController {
     public List<EventFullDto> adminSearch(@Valid @ModelAttribute AdminEventSearchParams params) {
 
         List<EventFullDto> events = eventService.searchForAdmin(params);
-        return events;
+        return events   ;
     }
 }

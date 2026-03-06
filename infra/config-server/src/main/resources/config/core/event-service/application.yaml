@@ -1,10 +1,12 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:4432/event
+    url: jdbc:postgresql://event-db:5432/event
     username: event
     password: event
     driver-class-name: org.postgresql.Driver
   jpa:
+    hibernate:
+      ddl-auto: create
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
     properties:
