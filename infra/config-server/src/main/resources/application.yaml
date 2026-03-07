@@ -7,14 +7,19 @@ spring:
     config:
       server:
         native:
-          searchLocations:
+          search-locations:
             - classpath:config/core/{application}
             - classpath:config/stats/{application}
             - classpath:config/infra/{application}
-server:
-  port: 0
 
 eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: "${spring.application.name}:${random.value}"
+    leaseRenewalIntervalInSeconds: 30
+
+server:
+  port: ${SERVER_PORT:8888}

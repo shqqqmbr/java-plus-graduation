@@ -1,0 +1,60 @@
+package ru.practicum.controller;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import ru.practicum.comment.dto.CommentFullDto;
+import ru.practicum.comment.dto.NewCommentDto;
+import ru.practicum.comment.dto.UpdCommentDto;
+import ru.practicum.service.CommentService;
+
+import java.util.List;
+
+
+@Validated
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/users/{userId}/events/{eventId}/comments")
+public class PrivateCommentController {
+
+    private final CommentService commentService;
+
+    @PostMapping
+    public ResponseEntity<CommentFullDto> addComment(@RequestBody @Valid NewCommentDto dto,
+                                                     @PathVariable Long eventId,
+                                                     @PathVariable Long userId) {
+
+        CommentFullDto result = commentService.add(dto, eventId, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<CommentFullDto>> getAllCommentsBy(@PathVariable Long userId,
+                                                                 @PathVariable Long eventId) {
+
+        List<CommentFullDto> result = commentService.getAllBy(userId, eventId);
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteComment(@PathVariable Long userId,
+                              @PathVariable Long eventId,
+                              @PathVariable Long commentId) {
+
+        commentService.delete(userId, commentId);
+    }
+
+    @PatchMapping("/{commentId}")
+    public ResponseEntity<CommentFullDto> updateComment(@PathVariable Long userId,
+                                                        @PathVariable Long eventId,
+                                                        @PathVariable Long commentId,
+                                                        @Valid @RequestBody UpdCommentDto updDto) {
+
+        CommentFullDto result = commentService.update(userId, commentId, updDto);
+        return ResponseEntity.ok(result);
+    }
+}

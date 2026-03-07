@@ -24,8 +24,8 @@ public class StatsClient {
 
     private final String serverUrl;
 
-    public StatsClient(RestTemplate template, @Value("${explore-with-me-server.url}") String serverUrl) {
-        this.restTemplate = template;
+    public StatsClient(@Value("${explore-with-me-server.url}") String serverUrl) {
+        this.restTemplate = new RestTemplate();
         this.serverUrl = serverUrl;
 
         log.info("StatsClient инициализирован с сервером URL: {}", serverUrl);
