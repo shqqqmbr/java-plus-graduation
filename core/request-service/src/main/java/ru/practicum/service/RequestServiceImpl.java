@@ -7,6 +7,7 @@ import ru.practicum.event.client.EventServiceClient;
 import ru.practicum.event.dto.EventDtoForRequestService;
 import ru.practicum.event.dto.UpdRequestStatus;
 import ru.practicum.event.enums.EventState;
+import ru.practicum.ewm.client.CollectorClient;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.mapper.RequestMapper;
@@ -27,9 +28,10 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class RequestServiceImpl implements RequestService {
 
-    private final UserServiceClient userClient;
-    private final EventServiceClient eventClient;
+    private final UserServiceClient userServiceClient;
+    private final EventServiceClient eventServiceClient;
     private final RequestRepository requestRepository;
+    private final CollectorClient grpcCollectorClient;
 
     private final RequestMapper requestMapper;
 
@@ -37,7 +39,7 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     public ParticipationRequestDto create(Long userId, Long eventId) {
         UserDto userDto = findUserBy(userId);
-        EventDtoForRequestService eventDto = eventClient.getEventById(eventId);
+        EventDtoForRequestService eventDto = findEventBy(eventId);
 
         if (eventDto.getInitiatorId().equals(userId)) {
             throw new ConflictException("Нельзя участвовать в собственном событии");
@@ -62,7 +64,7 @@ public class RequestServiceImpl implements RequestService {
                 (!eventDto.getRequestModeration() || limit == 0) ? RequestStatus.CONFIRMED : RequestStatus.PENDING;
 
         if (status == RequestStatus.CONFIRMED) {
-            EventDtoForRequestService updatedEvent = eventClient.incrementConfirmedRequests(eventId);
+            EventDtoForRequestService updatedEvent = eventServiceClient.incrementConfirmedRequests(eventId);
 
             if (updatedEvent == null) {
                 throw new NotFoundException(
@@ -76,6 +78,8 @@ public class RequestServiceImpl implements RequestService {
                 .status(status)
                 .build();
         request = requestRepository.save(request);
+
+        grpcCollectorClient.recordRegister(userId, eventId);
 
         return requestMapper.toDto(request);
     }
@@ -106,13 +110,11 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<ParticipationRequestDto> getEventRequests(Long userId, Long eventId) {
-
         List<Request> requests = requestRepository.findAllByEventId(eventId);
 
         List<ParticipationRequestDto> dtos = requests.stream()
                 .map(requestMapper::toDto)
                 .toList();
-
         return dtos;
     }
 
@@ -147,8 +149,17 @@ public class RequestServiceImpl implements RequestService {
     private RequestStatus toRequestStatus(UpdRequestStatus updStatus) {
         return switch (updStatus) {
             case CONFIRMED -> RequestStatus.CONFIRMED;
-            case REJECTED -> RequestStatus.REJECTED;
+            case REJECTED  -> RequestStatus.REJECTED;
         };
+    }
+
+
+    private UserDto findUserBy(Long userId) {
+        UserDto userDto = userServiceClient.getUserById(userId);
+        if (userDto == null) {
+            throw new NotFoundException("User id={}, не существует", userId);
+        }
+        return userDto;
     }
 
     private Request findRequestBy(Long requestId) {
@@ -156,11 +167,11 @@ public class RequestServiceImpl implements RequestService {
                 .orElseThrow(() -> new NotFoundException("Request id={} не найден", requestId));
     }
 
-    private UserDto findUserBy(Long userId) {
-        UserDto userDto = userClient.getUserById(userId);
-        if (userDto == null) {
-            throw new NotFoundException("User id={}, не существует", userId);
+    private EventDtoForRequestService findEventBy(Long eventId) {
+        EventDtoForRequestService eventDto = eventServiceClient.getEventById(eventId);
+        if (eventDto == null) {
+            throw new NotFoundException("Event id={} не найден", eventId);
         }
-        return userDto;
+        return eventDto;
     }
 }

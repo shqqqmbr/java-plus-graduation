@@ -35,6 +35,6 @@ public class UserEventSearchParams {
 
     public enum Sort {
         EVENT_DATE,
-        VIEWS
+        RATING
     }
 }

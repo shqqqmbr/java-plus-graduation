@@ -17,3 +17,16 @@ spring:
   logging:
     level:
       ru.practicum.ewm: DEBUG
+
+grpc:
+  client:
+    analyzer:
+      address: 'discovery:///analyzer'
+      negotiationType: plaintext
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+    collector:
+      address: 'discovery:///collector'
+      negotiationType: plaintext
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true

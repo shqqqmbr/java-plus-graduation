@@ -1,4 +1,103 @@
 services:
+  kafka:
+    image: confluentinc/confluent-local:7.4.3
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      CLUSTER_ID: 'K0EA9p0yEe6MkAAAAkKsEg'
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  kafka-init-topics:
+    image: confluentinc/confluent-local:7.4.3
+    container_name: kafka-init-topics
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command: >
+      bash -c "
+        echo 'Waiting for Kafka...' &&
+        while ! kafka-topics --bootstrap-server kafka:29092 --list > /dev/null 2>&1; do
+          sleep 2
+        done &&
+        kafka-topics --create --topic stats.user-actions.v1 --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 &&
+        kafka-topics --create --topic stats.events-similarity.v1 --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 &&
+        echo 'Topics created'
+      "
+    init: true
+
+  collector:
+    build: stats/collector
+    container_name: collector
+    ports:
+      - "9091:9091"
+    depends_on:
+      kafka-init-topics:
+        condition: service_completed_successfully
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SERVER_PORT=9091
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9091/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  aggregator:
+    build: stats/aggregator
+    container_name: aggregator
+    ports:
+      - "9092:9092"
+    depends_on:
+      collector:
+        condition: service_healthy
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SERVER_PORT=9092
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9092/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  analyzer:
+    build: stats/analyzer
+    container_name: analyzer
+    ports:
+      - "9093:9093"
+    depends_on:
+      aggregator:
+        condition: service_healthy
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SERVER_PORT=9093
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9093/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   discovery-server:
     build: infra/discovery-server
     container_name: discovery-server
@@ -69,33 +168,12 @@ services:
       - POSTGRES_USER=stats
       - POSTGRES_PASSWORD=stats
     restart: unless-stopped
-    volumes:
-      - stats-db-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-
-  stats-server:
-    build: stats/stats-server
-    container_name: stats-server
-    ports:
-      - "9090:9090"
-    depends_on:
-      stats-db:
-        condition: service_healthy
-      discovery-server:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/stats
-      - SPRING_DATASOURCE_USERNAME=stats
-      - SPRING_DATASOURCE_PASSWORD=stats
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
-    restart: unless-stopped
 
   event-db:
     image: postgres:16.1
@@ -107,8 +185,6 @@ services:
       - POSTGRES_USER=event
       - POSTGRES_PASSWORD=event
     restart: unless-stopped
-    volumes:
-      - event-db-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
       interval: 10s
@@ -128,8 +204,6 @@ services:
         condition: service_healthy
       config-server:
         condition: service_healthy
-      stats-server:
-        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://event-db:5432/event
       - SPRING_DATASOURCE_USERNAME=event
@@ -148,8 +222,6 @@ services:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=user
     restart: unless-stopped
-    volumes:
-      - user-db-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
       interval: 10s
@@ -169,8 +241,6 @@ services:
         condition: service_healthy
       config-server:
         condition: service_healthy
-      stats-server:
-        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://user-db:5432/user
       - SPRING_DATASOURCE_USERNAME=user
@@ -189,8 +259,6 @@ services:
       - POSTGRES_USER=request
       - POSTGRES_PASSWORD=request
     restart: unless-stopped
-    volumes:
-      - request-db-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
       interval: 10s
@@ -210,8 +278,6 @@ services:
         condition: service_healthy
       config-server:
         condition: service_healthy
-      stats-server:
-        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://request-db:5432/request
       - SPRING_DATASOURCE_USERNAME=request
@@ -230,8 +296,6 @@ services:
       - POSTGRES_USER=comment
       - POSTGRES_PASSWORD=comment
     restart: unless-stopped
-    volumes:
-      - comment-db-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
       interval: 10s
@@ -251,8 +315,6 @@ services:
         condition: service_healthy
       config-server:
         condition: service_healthy
-      stats-server:
-        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://comment-db:5432/comment
       - SPRING_DATASOURCE_USERNAME=comment
@@ -260,10 +322,3 @@ services:
       - SERVER_PORT=8084
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
     restart: unless-stopped
-
-volumes:
-  stats-db-data:
-  event-db-data:
-  user-db-data:
-  request-db-data:
-  comment-db-data:

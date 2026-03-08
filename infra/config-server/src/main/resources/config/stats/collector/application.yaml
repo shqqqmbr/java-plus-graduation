@@ -1,0 +1,8 @@
+collector:
+  kafka:
+    config:
+      bootstrap-servers: "kafka:29092"
+      client-id-config: "producer-1"
+      producer-key-serializer: "org.apache.kafka.common.serialization.LongSerializer"
+      producer-value-serializer: "ru.practicum.ewm.collector.stats.avro.AvroSerializer"
+      user-action-topic: "stats.user-actions.v1"

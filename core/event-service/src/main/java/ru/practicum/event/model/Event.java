@@ -86,8 +86,7 @@ public class Event {
             nullable = false)
     private String title;
 
-    @Column(nullable = false,
-            columnDefinition = "integer default 0")
+    @Column(nullable = false)
     @Builder.Default
-    private Long views = 0L;
+    private double rating = 0.0;
 }

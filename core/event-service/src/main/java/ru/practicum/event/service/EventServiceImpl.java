@@ -18,9 +18,9 @@ import ru.practicum.event.mapper.EventMapper;
 import ru.practicum.event.model.Event;
 import ru.practicum.event.model.QEvent;
 import ru.practicum.event.repository.EventRepository;
-import ru.practicum.ewm.ReqStatsParams;
-import ru.practicum.ewm.StatsDto;
-import ru.practicum.ewm.client.StatsClient;
+import ru.practicum.ewm.client.CollectorClient;
+import ru.practicum.ewm.client.RecommendationsClient;
+import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.request.client.RequestServiceClient;
@@ -31,9 +31,7 @@ import ru.practicum.user.dto.UserDto;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static java.time.ZoneOffset.UTC;
 import static ru.practicum.event.enums.EventState.CANCELED;
@@ -50,7 +48,8 @@ public class EventServiceImpl implements EventService {
 
     private final EventMapper eventMapper;
 
-    private final StatsClient statsClient;
+    private final CollectorClient grpcCollectorClient;
+    private final RecommendationsClient grpcAnalyzerClient;
 
     // Private API:
     @Override
@@ -83,7 +82,6 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getByUser(Long userId, Long eventId) {
-
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Event id={} у user id={} не найдено", eventId, userId));
 
@@ -94,8 +92,10 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventFullDto updateByUser(Long userId, Long eventId, UpdEventUserRequest updDto) {
         this.checkEventDateForUpdate(updDto);
+
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Event id={} не найдено; User id={} ", eventId, userId));
+
         if (event.getState().equals(EventState.PUBLISHED)) {
             throw new ConflictException("Event id={} нельзя изменить; его status={}", eventId, event.getState());
         }
@@ -112,7 +112,6 @@ public class EventServiceImpl implements EventService {
                 case CANCEL_REVIEW -> event.setState(CANCELED);
             }
         }
-
         eventMapper.updateFromDto(updDto, event);
         event = eventRepository.save(event);
         return eventMapper.toFullDto(event);
@@ -129,7 +128,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public UpdRequestsStatusResult updateRequests(Long userId, Long eventId, EventRequestStatusUpdateRequest updDto) {
         Event event = this.findEventBy(eventId);
-        List<ParticipationRequestDto> requestDtos = requestServiceClient.getRequestsById(
+        List<ParticipationRequestDto> requestDtos = requestServiceClient.getRequestsByIds(
                 updDto.getRequestIds().stream().toList()
         );
 
@@ -168,7 +167,7 @@ public class EventServiceImpl implements EventService {
                 List<ParticipationRequestDto> rejectedDtos = List.of();
 
                 if (!toConfirmIds.isEmpty()) {
-                    confirmedDtos = requestServiceClient.updateRequestStatus(
+                    confirmedDtos = requestServiceClient.updateRequestStatuses(
                             EventRequestStatusUpdateRequest.builder()
                                     .requestIds(new HashSet<>(toConfirmIds))
                                     .status(UpdRequestStatus.CONFIRMED)
@@ -177,7 +176,7 @@ public class EventServiceImpl implements EventService {
                 }
 
                 if (!toRejectIds.isEmpty()) {
-                    rejectedDtos = requestServiceClient.updateRequestStatus(
+                    rejectedDtos = requestServiceClient.updateRequestStatuses(
                             EventRequestStatusUpdateRequest.builder()
                                     .requestIds(new HashSet<>(toRejectIds))
                                     .status(UpdRequestStatus.REJECTED)
@@ -185,6 +184,7 @@ public class EventServiceImpl implements EventService {
                     );
                 }
 
+                // Обновляем количество подтверждённых
                 event.setConfirmedRequests(event.getConfirmedRequests() + confirmedDtos.size());
                 eventRepository.save(event);
 
@@ -200,7 +200,7 @@ public class EventServiceImpl implements EventService {
                     throw new ConflictException("Нельзя отклонить подтверждённые заявки");
                 }
 
-                List<ParticipationRequestDto> rejectedDtos = requestServiceClient.updateRequestStatus(
+                List<ParticipationRequestDto> rejectedDtos = requestServiceClient.updateRequestStatuses(
                         EventRequestStatusUpdateRequest.builder()
                                 .requestIds(updDto.getRequestIds())
                                 .status(UpdRequestStatus.REJECTED)
@@ -248,7 +248,6 @@ public class EventServiceImpl implements EventService {
                     } else if (event.getState().equals(EventState.PUBLISHED)) {
                         throw new ConflictException("Опубликованные Event не могут быть отклонены");
                     }
-
                 }
             }
         }
@@ -299,19 +298,18 @@ public class EventServiceImpl implements EventService {
 
     // Public API:
     @Override
-    public EventFullDto getPublicBy(Long eventId, HttpServletRequest request) {
+    public EventFullDto getPublicBy(Long eventId, Long userId, HttpServletRequest request) {
+
         Event event = eventRepository.findByIdAndState(eventId, EventState.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException("Опубликованного Event id={} нет", eventId));
 
-        statsClient.hit(request);
-        this.setViewsForEvent(event);
+        grpcCollectorClient.recordView(eventId, userId);
 
         return eventMapper.toFullDto(event);
     }
 
     @Override
     public List<EventFullDto> getPublicBy(UserEventSearchParams params, HttpServletRequest request) {
-        validateSearchParams(params);
 
         QEvent event = QEvent.event;
         List<BooleanExpression> conditions = new ArrayList<>();
@@ -321,8 +319,7 @@ public class EventServiceImpl implements EventService {
         if (params.getText() != null && !params.getText().isEmpty()) {
             conditions.add(
                     event.annotation.containsIgnoreCase(params.getText())
-                            .or(event.description.containsIgnoreCase(params.getText()))
-            );
+                            .or(event.description.containsIgnoreCase(params.getText())));
         }
 
         if (params.getCategories() != null && !params.getCategories().isEmpty()) {
@@ -347,11 +344,8 @@ public class EventServiceImpl implements EventService {
             conditions.add(event.eventDate.after(Instant.now()));
         }
 
-        if (params.getOnlyAvailable() != null && params.getOnlyAvailable()) {
-            conditions.add(
-                    event.participantLimit.eq(0)
-                            .or(event.confirmedRequests.lt(event.participantLimit))
-            );
+        if (params.getOnlyAvailable() != null) {
+            conditions.add(event.confirmedRequests.lt(event.participantLimit.longValue()));
         }
 
         BooleanExpression finalCondition = conditions.stream()
@@ -359,45 +353,44 @@ public class EventServiceImpl implements EventService {
                 .orElse(Expressions.TRUE);
 
         int page = params.getFrom() / params.getSize();
-        Pageable pageable = createPageable(params, page);
+
+        Pageable pageable = null;
+
+        switch (params.getSort()) {
+            case EVENT_DATE -> pageable =
+                    PageRequest.of(page, params.getSize(), Sort.by(Sort.Direction.ASC, "eventDate"));
+            case RATING -> pageable =
+                    PageRequest.of(page, params.getSize(), Sort.by(Sort.Direction.DESC, "views"));
+        }
 
         Page<Event> events = eventRepository.findAll(finalCondition, pageable);
-
-        statsClient.hit(request);
 
         return events.map(eventMapper::toFullDto).getContent();
     }
 
-    private void validateSearchParams(UserEventSearchParams params) {
-        if (params.getSize() <= 0) {
-            throw new IllegalArgumentException("Size must be positive");
+    @Override
+    public void like(Long userId, Long eventId) {
+        if (!requestServiceClient.isParticipant(userId, eventId)) {
+            throw new BadRequestException("User id={} не является участником event eventId={}", userId, eventId);
         }
 
-        if (params.getFrom() < 0) {
-            throw new IllegalArgumentException("From must be non-negative");
+        if (!eventRepository.existsByIdAndEventDateBefore(eventId, Instant.now())) {
+            throw new BadRequestException("Event eventId={} еще не прошло", eventId);
         }
 
-        if (params.getRangeStart() != null && params.getRangeEnd() != null) {
-            if (params.getRangeStart().isAfter(params.getRangeEnd())) {
-                throw new IllegalArgumentException("Start date must be before end date");
-            }
-        }
+        grpcCollectorClient.recordLike(eventId, userId);
     }
 
-    private Pageable createPageable(UserEventSearchParams params, int page) {
-        return switch (params.getSort()) {
-            case EVENT_DATE -> PageRequest.of(
-                    page,
-                    params.getSize(),
-                    Sort.by(Sort.Direction.ASC, "eventDate")
-            );
-            case VIEWS -> PageRequest.of(
-                    page,
-                    params.getSize(),
-                    Sort.by(Sort.Direction.DESC, "views")
-            );
-            default -> PageRequest.of(page, params.getSize());
-        };
+    @Override
+    public List<EventShortDto> getRecommendations(Long userId, int maxResults) {
+        Map<Long, Double> scoreByEvent = grpcAnalyzerClient.getRecommendationsForUser(userId, maxResults);
+        Set<Long> eventIds = scoreByEvent.keySet();
+        List<Event> events = eventRepository.findAllByIdIn(eventIds);
+
+        return events.stream()
+                .map(eventMapper::toShortDto)
+                .peek(dto -> dto.setRating(scoreByEvent.get(dto.getId())))
+                .toList();
     }
 
     @Override
@@ -419,41 +412,35 @@ public class EventServiceImpl implements EventService {
     }
 
     private Category findCategoryBy(Long categoryId) {
+
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Объект Category id={} не найден", categoryId));
     }
 
     private Event findEventBy(Long eventId) {
+
         return eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Объект Event id={} не найден", eventId));
     }
 
     private void checkStartDate(LocalDateTime eventDate) {
+
         if (eventDate != null && eventDate.isBefore(LocalDateTime.now().plusHours(2))) {
             throw new ConflictException("Дата Event при СОЗДАНИИ должна быть в будущем, мин. через 2 часа");
         }
     }
 
     private void checkEventDateForUpdate(UpdEventUserRequest updDto) {
+
         if (updDto.getEventDate() != null) {
             this.checkStartDate(updDto.getEventDate());
         }
     }
 
     private void checkEventDateForPublish(LocalDateTime eventDate) {
+
         if (eventDate != null && eventDate.isBefore(LocalDateTime.now().plusHours(1))) {
             throw new ConflictException("Дата Event при ПУБЛИКАЦИИ должна быть в будущем, мин. через 1 час");
         }
-    }
-
-    private void setViewsForEvent(Event event) {
-        List<StatsDto> stats = statsClient.getStats(ReqStatsParams.builder()
-                .start(LocalDateTime.now().minusYears(100))
-                .end(LocalDateTime.now().plusYears(1))
-                .uris(List.of("/events/" + event.getId()))
-                .unique(true)
-                .build());
-
-        event.setViews(stats.getFirst().getHits());
     }
 }

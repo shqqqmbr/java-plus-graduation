@@ -9,16 +9,20 @@ import java.util.List;
 
 @FeignClient(name = "request-service", path = "/internal/requests")
 public interface RequestServiceClient {
-    @GetMapping("/by-ids")
-    List<ParticipationRequestDto> getRequestsById(@RequestParam List<Long> requestIds);
 
     @GetMapping("/events/{eventId}")
     List<ParticipationRequestDto> getEventRequests(
             @RequestParam("userId") Long userId,
             @PathVariable("eventId") Long eventId);
 
+    @GetMapping("/by-ids")
+    List<ParticipationRequestDto> getRequestsByIds(@RequestParam List<Long> requestIds);
+
+
     @PutMapping("/status")
-    List<ParticipationRequestDto> updateRequestStatus(
+    List<ParticipationRequestDto> updateRequestStatuses(
             @RequestBody EventRequestStatusUpdateRequest request);
 
+    @GetMapping("{eventId}/participant/{userId}")
+    boolean isParticipant(@PathVariable Long userId, @PathVariable Long eventId);
 }
