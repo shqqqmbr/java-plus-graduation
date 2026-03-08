@@ -1,14 +1,14 @@
 analyzer:
   kafka:
     user-action-consumer-props:
-      bootstrapServers: "kafka:29092"
+      bootstrapServers: "localhost:9092"
       groupId: "analyzer-group"
       keyDeserializer: "org.apache.kafka.common.serialization.LongDeserializer"
       valueDeserializer: "ru.practicum.stats.avro.UserActionDeserializer"
       enableAutoCommit: "false"
       autoOffsetReset: "earliest"
     event-similarity-consumer-props:
-      bootstrapServers: "kafka:29092"
+      bootstrapServers: "localhost:9092"
       groupId: "analyzer-group"
       keyDeserializer: "org.apache.kafka.common.serialization.LongDeserializer"
       valueDeserializer: "ru.practicum.stats.avro.EventSimilarityDeserializer"

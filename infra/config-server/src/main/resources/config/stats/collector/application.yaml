@@ -1,7 +1,7 @@
 collector:
   kafka:
     config:
-      bootstrapServers: "kafka:29092"
+      bootstrapServers: "localhost:9092"
       clientIdConfig: "producer-1"
       producerKeySerializer: "org.apache.kafka.common.serialization.LongSerializer"
       producerValueSerializer: "ru.practicum.avro.AvroSerializer"

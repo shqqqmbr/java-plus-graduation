@@ -14,25 +14,25 @@ spring:
         default_schema: public
         format_sql: true
 
-  logging:
-    level:
-      ru.practicum.ewm: DEBUG
+logging:
+  level:
+    ru.practicum.ewm: DEBUG
 
 analyzer:
   kafka:
     user-action-consumer-props:
-      bootstrap.servers: kafka:29092
-      group.id: "analyzer-group"
-      key.deserializer: org.apache.kafka.common.serialization.LongDeserializer
-      value.deserializer: ru.practicum.stats.avro.UserActionDeserializer
-      enable.auto.commit: "false"
-      auto.offset.reset: "earliest"
+      bootstrapServers: "localhost:9092"
+      groupId: "analyzer-group"
+      keyDeserializer: org.apache.kafka.common.serialization.LongDeserializer
+      valueDeserializer: ru.practicum.stats.avro.UserActionDeserializer
+      enableAutoCommit: "false"
+      autoOffsetReset: "earliest"
     event-similarity-consumer-props:
-      bootstrap.servers: kafka:29092
-      group.id: "analyzer-group"
-      key.deserializer: org.apache.kafka.common.serialization.LongDeserializer
-      value.deserializer: ru.practicum.stats.avro.EventSimilarityDeserializer
-      enable.auto.commit: "false"
-      auto.offset.reset: "earliest"
-    user-actions-topic: stats.user-actions.v1
-    events-similarity-topic: stats.events-similarity.v1
+      bootstrapServers: "localhost:9092"
+      groupId: "analyzer-group"
+      keyDeserializer: org.apache.kafka.common.serialization.LongDeserializer
+      valueDeserializer: ru.practicum.stats.avro.EventSimilarityDeserializer
+      enableAutoCommit: "false"
+      autoOffsetReset: "earliest"
+    userActionsTopic: "stats.user-actions.v1"
+    eventsSimilarityTopic: "stats.events-similarity.v1"
