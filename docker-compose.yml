@@ -63,8 +63,6 @@ services:
   aggregator:
     build: stats/aggregator
     container_name: aggregator
-    ports:
-      - "9092:9092"
     depends_on:
       collector:
         condition: service_healthy

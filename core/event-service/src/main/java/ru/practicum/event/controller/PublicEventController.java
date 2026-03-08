@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.InternalException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.EventDtoForRequestService;
@@ -26,68 +28,72 @@ public class PublicEventController {
     private static final String USER_ID_HEADER = "X-EWM-USER-ID";
     private final EventService eventService;
 
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/{eventId}")
-    public ResponseEntity<EventFullDto> publicSearchOne(@PathVariable Long eventId,
+    public EventFullDto publicSearchOne(@PathVariable Long eventId,
                                                         @RequestHeader(value = USER_ID_HEADER, required = false) Long userId,
                                                         HttpServletRequest request) {
         log.debug("Метод publicSearchOne(); eventId={}", eventId);
 
         EventFullDto event = eventService.getPublicBy(eventId, userId, request);
-        return ResponseEntity.ok(event);
+        return event;
     }
 
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping
-    public ResponseEntity<List<EventFullDto>> publicSearchMany(@Valid @ModelAttribute UserEventSearchParams params,
+    public List<EventFullDto> publicSearchMany(@Valid @ModelAttribute UserEventSearchParams params,
                                                                HttpServletRequest request) {
         log.debug("Метод publicSearchMany(); {}", params);
 
         List<EventFullDto> events = eventService.getPublicBy(params, request);
-        return ResponseEntity.ok(events);
+        return events;
     }
 
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/internal/{eventId}")
-    public ResponseEntity<EventDtoForRequestService> getEventById(
+    public EventDtoForRequestService getEventById(
             @PathVariable Long eventId) {
 
         log.debug("Feign-запрос: получение EventDtoForRequestService для eventId={}", eventId);
 
         EventDtoForRequestService dto = eventService.getEventDtoForRequestService(eventId);
 
-        return ResponseEntity.ok(dto);
+        return dto;
     }
 
+    @ResponseStatus(HttpStatus.OK)
     @PutMapping("internal/{eventId}/increment-confirmed")
-    public ResponseEntity<EventDtoForRequestService> incrementConfirmedRequests(
+    public EventDtoForRequestService incrementConfirmedRequests(
             @PathVariable Long eventId) {
 
         log.debug("Feign-запрос: инкремент confirmedRequests для eventId={}", eventId);
 
         try {
             EventDtoForRequestService updatedDto = eventService.incrementConfirmedRequests(eventId);
-            return ResponseEntity.ok(updatedDto);
+            return updatedDto;
         } catch (Exception e) {
-            log.error("Ошибка при инкременте confirmedRequests для eventId={}: {}", eventId, e.getMessage());
-            return ResponseEntity.status(500).build();
+            throw new InternalException("Ошибка при инкременте confirmedRequests для eventId={}: {}\", eventId, e.getMessage()");
         }
     }
 
+    @ResponseStatus(HttpStatus.OK)
     @PutMapping("/{eventId}/like")
-    public ResponseEntity<Void> like(@PathVariable @PositiveOrZero @NotNull Long eventId,
+    public void like(@PathVariable @PositiveOrZero @NotNull Long eventId,
                                      @RequestHeader(USER_ID_HEADER) Long userId) {
         log.debug("Метод like(); eventId={}, userId={}", eventId, userId);
 
         eventService.like(eventId, userId);
-        return ResponseEntity.ok().build();
     }
 
+    @ResponseStatus(HttpStatus.OK)
     @GetMapping("/recommendations")
-    public ResponseEntity<List<EventShortDto>> getRecommendations(
+    public List<EventShortDto> getRecommendations(
             @RequestHeader(USER_ID_HEADER) Long userId,
             @RequestParam(defaultValue = "10") @Positive int size
     ) {
         log.debug("Метод getRecommendations();  userId={}, size={}", userId, size);
 
         List<EventShortDto> result = eventService.getRecommendations(userId, size);
-        return ResponseEntity.ok(result);
+        return result;
     }
 }

@@ -303,7 +303,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findByIdAndState(eventId, EventState.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException("Опубликованного Event id={} нет", eventId));
 
-        grpcCollectorClient.recordView(eventId, userId);
+        grpcCollectorClient.recordView(userId, eventId);
 
         return eventMapper.toFullDto(event);
     }
@@ -378,7 +378,7 @@ public class EventServiceImpl implements EventService {
             throw new BadRequestException("Event eventId={} еще не прошло", eventId);
         }
 
-        grpcCollectorClient.recordLike(eventId, userId);
+        grpcCollectorClient.recordLike(userId, eventId);
     }
 
     @Override
