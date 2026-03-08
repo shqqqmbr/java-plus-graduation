@@ -21,18 +21,18 @@ logging:
 analyzer:
   kafka:
     user-action-consumer-props:
-      bootstrapServers: "localhost:9092"
-      groupId: "analyzer-group"
-      keyDeserializer: org.apache.kafka.common.serialization.LongDeserializer
-      valueDeserializer: ru.practicum.stats.avro.UserActionDeserializer
-      enableAutoCommit: "false"
-      autoOffsetReset: "earliest"
+      bootstrap.servers: "localhost:9092"
+      group.id: "analyzer-group"
+      key.deserializer: org.apache.kafka.common.serialization.LongDeserializer
+      value.deserializer: ru.practicum.stats.avro.UserActionDeserializer
+      enable.auto.commit: "false"
+      auto.offset.reset: "earliest"
     event-similarity-consumer-props:
-      bootstrapServers: "localhost:9092"
-      groupId: "analyzer-group"
-      keyDeserializer: org.apache.kafka.common.serialization.LongDeserializer
-      valueDeserializer: ru.practicum.stats.avro.EventSimilarityDeserializer
-      enableAutoCommit: "false"
-      autoOffsetReset: "earliest"
-    userActionsTopic: "stats.user-actions.v1"
-    eventsSimilarityTopic: "stats.events-similarity.v1"
+      bootstrap.servers: "localhost:9092"
+      group.id: "analyzer-group"
+      key.deserializer: org.apache.kafka.common.serialization.LongDeserializer
+      value.deserializer: ru.practicum.stats.avro.EventSimilarityDeserializer
+      enable.auto.commit: "false"
+      auto.offset.reset: "earliest"
+    user-actions-topic: "stats.user-actions.v1"
+    events-similarity-topic: "stats.events-similarity.v1"
