@@ -24,14 +24,14 @@ analyzer:
       bootstrap.servers: "localhost:9092"
       group.id: "analyzer-group"
       key.deserializer: org.apache.kafka.common.serialization.LongDeserializer
-      value.deserializer: ru.practicum.stats.avro.UserActionDeserializer
+      value.deserializer: ru.practicum.avro.UserActionDeserializer
       enable.auto.commit: "false"
       auto.offset.reset: "earliest"
     event-similarity-consumer-props:
       bootstrap.servers: "localhost:9092"
       group.id: "analyzer-group"
       key.deserializer: org.apache.kafka.common.serialization.LongDeserializer
-      value.deserializer: ru.practicum.stats.avro.EventSimilarityDeserializer
+      value.deserializer: ru.practicum.avro.EventSimilarityDeserializer
       enable.auto.commit: "false"
       auto.offset.reset: "earliest"
     user-actions-topic: "stats.user-actions.v1"
