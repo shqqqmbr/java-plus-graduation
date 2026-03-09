@@ -26,11 +26,12 @@ public interface EventMapper {
     @Mapping(target = "requestModeration",
             expression = "java(newEventDto.getRequestModeration() != null ? newEventDto.getRequestModeration() : true)")
     @Mapping(target = "state", ignore = true)
-    @Mapping(target = "views", ignore = true)
+    @Mapping(target = "rating", ignore = true)
     Event toEntity(NewEventDto newEventDto);
 
     @Mapping(target = "eventDate", expression = "java(toLocalDateTimeForMap(event.getEventDate()))")
     @Mapping(target = "initiator", ignore = true)
+    @Mapping(target = "rating", ignore = true)
     EventShortDto toShortDto(Event event);
 
     @Mapping(target = "createdOn", expression = "java(toLocalDateTimeForMap(event.getCreatedOn()))")
@@ -46,7 +47,7 @@ public interface EventMapper {
     @Mapping(target = "eventDate",
             expression = "java(toInstantForUpdate(updEventUserRequest.getEventDate(), event.getEventDate()))")
     @Mapping(target = "state", ignore = true)
-    @Mapping(target = "views", ignore = true)
+    @Mapping(target = "rating", ignore = true)
     void updateFromDto(UpdEventUserRequest updEventUserRequest, @MappingTarget Event event);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -56,7 +57,7 @@ public interface EventMapper {
     @Mapping(target = "eventDate",
             expression = "java(toInstantForUpdate(updEventAdminRequest.getEventDate(), event.getEventDate()))")
     @Mapping(target = "state", ignore = true)
-    @Mapping(target = "views", ignore = true)
+    @Mapping(target = "rating", ignore = true)
     void updateFromDto(UpdEventAdminRequest updEventAdminRequest, @MappingTarget Event event);
 
     @Mapping(target = "id", source = "id")
